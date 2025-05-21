@@ -1,0 +1,91 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Reservasi extends Model
+{
+    //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
+    //karena nama file Reservasi & nama table bukan reservasis jadi hrs dideklarasi
+    protected $table = 'reservasi';
+
+    //ini isi smua atribut selain primary key
+    protected $fillable = [
+        'nama_pemesan',
+        'no_telepon',
+        'email',
+        'judul_kegiatan',
+        'waktu_check_in',
+        'waktu_check_out',
+        'jumlah_laki_laki',
+        'jumlah_perempuan',
+        'informasi_tambahan',
+        'status',
+        'tanggal_dibuat',
+        'id_pic_ioc',
+        'id_pic_utc',
+        'alamat',
+        'acc',
+    ];
+
+    //deklarasi bahwa field id_pic_ioc di tabel ini adalah milik table User
+    public function pic_ioc()
+    {
+        return $this->belongsTo(User::class, 'id_pic_ioc');
+    }
+
+    //deklarasi bahwa field id_pic_utc di tabel ini adalah milik table User
+    public function pic_utc()
+    {
+        return $this->belongsTo(User::class, 'id_pic_utc');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel Pembayaran adalah milik tabel Reservasi
+    public function pembayaran()
+    {
+        return $this->hasOne(Pembayaran::class, 'reservasi_id');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel DokumenReservasi adalah milik tabel Reservasi
+    public function dokumenReservasi()
+    {
+        return $this->hasMany(DokumenReservasi::class, 'reservasi_id');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel PemesananCampingGround adalah milik tabel Reservasi
+    public function pemesananCampingGround()
+    {
+        return $this->hasMany(PemesananCampingGround::class, 'reservasi_id');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel PemesananMeetingRoom adalah milik tabel Reservasi
+    public function pemesananMeetingRoom()
+    {
+        return $this->hasMany(PemesananMeetingRoom::class, 'reservasi_id');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel PemesananCottage adalah milik tabel Reservasi
+    public function pemesananCottage()
+    {
+        return $this->hasMany(PemesananCottage::class, 'reservasi_id');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel PemesananDriverRoom adalah milik tabel Reservasi
+    public function pemesananDriverRoom()
+    {
+        return $this->hasMany(PemesananDriverRoom::class, 'reservasi_id');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel PemesananAdditional adalah milik tabel Reservasi
+    public function pemesananAdditional()
+    {
+        return $this->hasMany(PemesananAdditional::class, 'reservasi_id');
+    }
+
+    //deklarasi bahwa field reservasi_id di tabel PemesananMenuMakan adalah milik tabel Reservasi
+    public function pemesananMenuMakan()
+    {
+        return $this->hasMany(PemesananMenuMakan::class, 'reservasi_id');
+    }
+}
