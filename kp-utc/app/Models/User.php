@@ -67,4 +67,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(DiskusiLaporan::class, 'user_id');
     }
+
+    //deklarasi bahwa field user_id di tabel LogLaporan adalah milik tabel User
+    public function logLaporan()
+    {
+        return $this->hasMany(LogLaporan::class, 'user_id');
+    }
 }

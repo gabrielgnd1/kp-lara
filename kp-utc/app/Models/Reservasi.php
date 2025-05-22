@@ -53,28 +53,10 @@ class Reservasi extends Model
         return $this->hasMany(DokumenReservasi::class, 'reservasi_id');
     }
 
-    //deklarasi bahwa field reservasi_id di tabel PemesananCampingGround adalah milik tabel Reservasi
-    public function pemesananCampingGround()
+    //deklarasi bahwa field reservasi_id di tabel PemesananFasilitas adalah milik tabel Reservasi
+    public function pemesananFasilitas()
     {
-        return $this->hasMany(PemesananCampingGround::class, 'reservasi_id');
-    }
-
-    //deklarasi bahwa field reservasi_id di tabel PemesananMeetingRoom adalah milik tabel Reservasi
-    public function pemesananMeetingRoom()
-    {
-        return $this->hasMany(PemesananMeetingRoom::class, 'reservasi_id');
-    }
-
-    //deklarasi bahwa field reservasi_id di tabel PemesananCottage adalah milik tabel Reservasi
-    public function pemesananCottage()
-    {
-        return $this->hasMany(PemesananCottage::class, 'reservasi_id');
-    }
-
-    //deklarasi bahwa field reservasi_id di tabel PemesananDriverRoom adalah milik tabel Reservasi
-    public function pemesananDriverRoom()
-    {
-        return $this->hasMany(PemesananDriverRoom::class, 'reservasi_id');
+        return $this->hasMany(PemesananFasilitas::class, 'reservasi_id');
     }
 
     //deklarasi bahwa field reservasi_id di tabel PemesananAdditional adalah milik tabel Reservasi

@@ -13,13 +13,17 @@ class LogLaporan extends Model
     //ini isi smua atribut selain primary key
     protected $fillable = [
         'user_id',
-        'diskusi_laporan'
+        'diskusi_laporan',
+        'laporan_id'
     ];
 
-    //deklarasi bahwa diskusi_laporan_id di table ini adalah milik table DiskusiLaporan
+    //deklarasi bahwa diskusi_laporan_user_id & diskusi_laporan_laporan_id di table ini adalah milik table DiskusiLaporan
     public function diskusiLaporan()
     {
-        return $this->belongsTo(DiskusiLaporan::class, 'diskusi_laporan_id');
+        return $this->hasOne(DiskusiLaporan::class, 
+            ['user_id', 'laporan_id'], 
+            ['diskusi_laporan_user_id', 'diskusi_laporan_laporan_id']
+        );
     }
 
     //deklarasi bahwa user_id di table ini adalah milik table DiskusiLaporan

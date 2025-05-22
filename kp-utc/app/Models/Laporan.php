@@ -22,7 +22,7 @@ class Laporan extends Model
         'tipe_laporan',
         'notifikasi',
         'user_id',
-        'area_idarea'
+        'area_id'
     ];
 
     //deklarasi bahwa id_role di table ini adalah milik table Role
@@ -46,6 +46,6 @@ class Laporan extends Model
     //deklarasi bahwa area_idarea di table ini adalah milik table Area
     public function area()
     {
-        return $this->belongsTo(Area::class, 'area_idarea');
+        return $this->belongsTo(Area::class, 'area_id');
     }
 }

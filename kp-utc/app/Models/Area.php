@@ -15,9 +15,9 @@ class Area extends Model
         'nama_area'
     ];
 
-    //deklarasi bahwa field area_idarea di tabel Laporan adalah milik tabel Area
+    //deklarasi bahwa field area_id di tabel Laporan adalah milik tabel Area
      public function laporan()
     {
-        return $this->hasMany(Laporan::class, 'area_idarea');
+        return $this->hasMany(Laporan::class, 'area_id');
     }
 }

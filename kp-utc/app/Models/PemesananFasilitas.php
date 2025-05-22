@@ -17,9 +17,15 @@ class PemesananCottage extends Model
         'jumlah'
     ];
 
-    //deklarasi bahwa cottage_id di table ini adalah milik table Cottage
-    public function cottage()
+    //deklarasi bahwa fasilitas_id di table ini adalah milik table Fasilitas
+    public function fasilitas()
     {
-        return $this->belongsTo(Cottage::class, 'cottage_id');
+        return $this->belongsTo(Fasilitas::class, 'fasilitas_id');
+    }
+
+    //deklarasi bahwa reservasi_id di table ini adalah milik table Reservasi
+    public function reservasi()
+    {
+        return $this->belongsTo(Reservasi::class, 'reservasi_id');
     }
 }

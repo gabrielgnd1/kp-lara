@@ -18,7 +18,7 @@ class DiskusiLaporan extends Model
     ];
 
     //deklarasi bahwa user_id di table ini adalah milik table User
-    public function users()
+    public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
