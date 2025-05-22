@@ -7,15 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Cottage extends Model
 {
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
-    //karena nama file Cottage & nama table bukan cottages jadi hrs dideklarasi
-    protected $table = 'cottage';
+    //karena nama file Fasilitas & nama table bukan fasilitass jadi hrs dideklarasi
+    protected $table = 'fasilitas';
 
     //ini isi smua atribut selain primary key
     protected $fillable = [
         'nama',
         'kapasitas',
-        'jenis_user',
-        'day',
         'keterangan',
         'harga_fasilitas_id',
         'status'
