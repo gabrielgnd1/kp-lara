@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Role;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -17,6 +20,7 @@ class UserController extends Controller
         return view('users.index', compact('users'));
     }
 
+    //buat nampilin create.blade.php
     public function create()
     {
         return view('users.create');
@@ -30,35 +34,45 @@ class UserController extends Controller
             'status' => 'required|string|in: Available, Not Available',
         ]);
 
+        //saat admin pertama kali create user, bakal auto generate password 10 karakter, campuran huruf & angka
         $password = Str::random(10);
 
         //cari id role berdasarkan nama role nya (karena di tabel user role disimpen pake id, bkn nama role)
+        //$request->$role ini itu hasil input dari form
+        //lalu cari hasil dari tabel Role di kolom nama yang isinya sama dengan $role
+        //firstOrFail ini syntax laravel buat ambil baris pertama dari hasil query, klo gaada, bakal return error 404 not found
+        //output dari ini itu nantinya akan berisi smua atribut dari role itu sendiri
+        //ex: $role->id = 1; $role->nama = super admin
         $role = Role::where('nama', $request->role)->firstOrFail();
 
-        User::create([
+        //simpan data user baru ke tabel User
+        //jalanin query create
+        $user->create([
             'username' => $request->username,
-            'password' => $request->password,
+            'password' => $password,
             'role_id' => $role->id,
             'status' => 'Available'
         ]);
 
+        //jika sukses, redirect ke index.blade.php
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
 
+    //buat superadmin jika ada user yang lupa password
     public function resetPassword(User $user)
     {
-        $this->authorize('update', $user);
         $password = Str::random(10);
         $user->password = $password;
+        //simpan perubahan data di database
         $user->save();
 
+        //jika sukses, redirect ke index.blade.php
         return redirect()->route('users.index')->with('success', 'Password reset successful.');
     }
 
+    //buat nampilin form edit.blade.php & kirim value roles
     public function edit(User $user)
     {
-        $this->authorize('update', $user);
-
         //rencananya pas super admin add user baru itu ada dropdown buat role
         //buat isi dropdown itu maka perlu semua jenis role yang ada -> pake Role::all()
         $roles = Role::all();
@@ -74,15 +88,29 @@ class UserController extends Controller
             'status' => 'required|string|in: Available, Not Available',
         ]);
 
-        //ini udah gaperlu $user = User::findOrFail($id); lagi karena parameter function ini kan ngirimnya dalam bentuk >>
-        //objek User, bukan ngirim id doang jadi nanti code findOrFail itu akan otomatis dijalankan >>
-        //laravel tanpa perlu dicode manual, kek dia bakal otomatis nyari user dengan id yang ada di parameter -> nah ini nanti waktu mau update hrs kirim id di parameter??
-        User::update([
+        //ini udah gaperlu $user = User::findOrFail($id) lagi karena parameter function ini kan ngirimnya >>
+        //dalam bentuk objek User, bukan ngirim id doang jadi nanti code findOrFail itu akan otomatis >>
+        //dijalankan  laravel tanpa perlu dicode manual, kek dia bakal otomatis nyari user dengan id >>
+        //yang ada di parameter -> nah ini nanti waktu mau update hrs kirim id di parameter??
+
+        //ini jalanin query update
+        $user->update([
             'username' => $request->username,
              'role_id' => $request->role_id,
             'status' => $request->status,
         ]);
 
+        //jika sukses, redirect ke index.blade.php
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
+    }
+
+    //buat menonaktifkan suatu user
+    public function deactivate(User $user)
+    {
+        $user->status = 'Not Available';
+        $user->save();
+
+        //jika sukses, redirect ke index.blade.php
+        return redirect()->route('users.index')->with('success', 'User status set to Not Available.');
     }
 }
