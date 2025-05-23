@@ -15,8 +15,11 @@ class Fasilitas extends Model
         'nama',
         'kapasitas',
         'keterangan',
-        'harga_fasilitas_id',
-        'status'
+        'status',
+        'jenis_user',
+        'day',
+        'menginap',
+        'harga'
     ];
 
     //deklarasi bahwa field cottage_id di tabel PemesananFasilitas adalah milik tabel Fasilitas
