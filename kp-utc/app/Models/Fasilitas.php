@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Cottage extends Model
+class Fasilitas extends Model
 {
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
     //karena nama file Fasilitas & nama table bukan fasilitass jadi hrs dideklarasi

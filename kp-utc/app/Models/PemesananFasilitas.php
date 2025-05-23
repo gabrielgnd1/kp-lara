@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PemesananCottage extends Model
+class PemesananFasilitas extends Model
 {
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
-    //karena nama file PemesananCottage & nama table bukan pemesanancottages jadi hrs dideklarasi
-    protected $table = 'pemesanan_cottage';
+    //karena nama file PemesananFasilitas & nama table bukan pemesananfasilitass jadi hrs dideklarasi
+    protected $table = 'pemesanan_fasilitas';
 
     //ini isi smua atribut selain primary key
     protected $fillable = [
