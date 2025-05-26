@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -26,7 +27,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+           //   ->login() // tanpa parameter
+            ->homeUrl(fn () => route('filament.admin.pages.dashboard'))
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -55,4 +57,11 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
     }
+
+   /* public function boot(): void
+    {
+        Filament::serving(function () {
+            config(['filament.auth.login.username' => 'username']);
+        });
+    } */
 }

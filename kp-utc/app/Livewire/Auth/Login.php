@@ -1,41 +1,49 @@
 <?php
 
-namespace App\Livewire\Auth;
+namespace App\Http\Livewire\Auth;
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
+use Filament\Facades\Filament;
 
 class Login extends Component
 {
-    /** @var string */
     public $email = '';
-
-    /** @var string */
     public $password = '';
-
-    /** @var bool */
     public $remember = false;
 
-    protected $rules = [
-        'email' => ['required', 'email'],
-        'password' => ['required'],
-    ];
-
-    public function authenticate()
+    public function login()
     {
-        $this->validate();
+        $this->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
-            $this->addError('email', trans('auth.failed'));
+        if (Auth::attempt([
+            'email' => $this->email,
+            'password' => $this->password,
+        ], $this->remember)) {
+            session()->regenerate();
 
-            return;
+            $user = Auth::user();
+
+            if ($user->id_role == 1 && $user->status === 'Available') {
+                return redirect(Filament::getPanel('admin')->getUrl());
+            }
+
+            if ($user->id_role == 3 && $user->status === 'Available') {
+                return redirect(Filament::getPanel('lapangan')->getUrl());
+            }
+
+            Auth::logout();
+            $this->addError('email', 'Akun Anda tidak memiliki akses yang valid.');
+        } else {
+            $this->addError('email', 'Email atau password salah.');
         }
-
-        return redirect()->intended(route('home'));
     }
 
     public function render()
     {
-        return view('livewire.auth.login')->extends('layouts.auth');
+        return view('livewire.auth.login')->layout('layouts.filament');
     }
 }

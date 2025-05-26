@@ -18,22 +18,24 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-class GlobalPanelProvider extends PanelProvider
+class LapanganPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('global')
-            ->path('global')
+            ->homeUrl(fn () => route('filament.lapangan.pages.dashboard'))
+            //->login()
+            ->id('lapangan')
+            ->path('lapangan')
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Global/Resources'), for: 'App\\Filament\\Global\\Resources')
-            ->discoverPages(in: app_path('Filament/Global/Pages'), for: 'App\\Filament\\Global\\Pages')
+            ->discoverResources(in: app_path('Filament/Lapangan/Resources'), for: 'App\\Filament\\Lapangan\\Resources')
+            ->discoverPages(in: app_path('Filament/Lapangan/Pages'), for: 'App\\Filament\\Lapangan\\Pages')
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Global/Widgets'), for: 'App\\Filament\\Global\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Lapangan/Widgets'), for: 'App\\Filament\\Lapangan\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,

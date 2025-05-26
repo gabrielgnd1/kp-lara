@@ -2,32 +2,37 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
+use Filament\Panel;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUserContract
 {
     use HasFactory, Notifiable;
 
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
     //karena nama file User & nama table bukan users jadi hrs dideklarasi
     protected $table = 'user';
+    public $timestamps = false; // karena di table user tidak ada created_at & updated_at
+
 
     //ini isi smua atribut selain primary key
     protected $fillable = [
+        'username',
         'name',
-        'email',
-        'password',
+        'email',    
+        'password',             
         'id_role',
         'status'
     ];
+    //kurang username gak se, sama name
 
     //hidden ini artinya data yang ada disini gaakan direturn waktu dipanggil
     protected $hidden = [
         'password',
-        'remember_token',
+        //  'remember_token',
     ];
 
     protected function casts(): array
@@ -37,6 +42,24 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+       public function canAccessPanel(Panel $panel): bool
+{
+    if ($panel->getId() === 'admin' && $this->role_id === 1 && $this->status === 'Available') {
+        return true;
+    }
+
+    if ($panel->getId() === 'lapangan' && $this->role_id === 3 && $this->status === 'Available') {
+        return true;
+    }
+
+    return false;
+}
+
+     /*public function getAuthIdentifierName()
+    {
+        return 'username'; // agar login pakai username
+    }*/
 
     //deklarasi bahwa id_role di table ini adalah milik table Role
     public function role()
@@ -73,4 +96,5 @@ class User extends Authenticatable
     {
         return $this->hasMany(LogLaporan::class, 'user_id');
     }
+    
 }
