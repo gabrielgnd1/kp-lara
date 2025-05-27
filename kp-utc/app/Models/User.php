@@ -43,18 +43,19 @@ class User extends Authenticatable implements FilamentUserContract
         ];
     }
 
-       public function canAccessPanel(Panel $panel): bool
+      public function canAccessPanel(Panel $panel): bool
 {
-    if ($panel->getId() === 'admin' && $this->role_id === 1 && $this->status === 'Available') {
+    if ($panel->getId() === 'admin' && $this->id_role === 1 && $this->status === 'Available') {
         return true;
     }
 
-    if ($panel->getId() === 'lapangan' && $this->role_id === 3 && $this->status === 'Available') {
+    if ($panel->getId() === 'lapangan' && $this->id_role === 3 && $this->status === 'Available') {
         return true;
     }
 
     return false;
 }
+
 
      /*public function getAuthIdentifierName()
     {

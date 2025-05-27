@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Auth;
+namespace App\Livewire\Auth;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +20,7 @@ class Login extends Component
         ]);
 
         if (Auth::attempt([
-            'email' => $this->email,
+            'email' => $this->email,    
             'password' => $this->password,
         ], $this->remember)) {
             session()->regenerate();
@@ -34,6 +34,8 @@ class Login extends Component
             if ($user->id_role == 3 && $user->status === 'Available') {
                 return redirect(Filament::getPanel('lapangan')->getUrl());
             }
+
+            //tinggal tambah panel lain 
 
             Auth::logout();
             $this->addError('email', 'Akun Anda tidak memiliki akses yang valid.');

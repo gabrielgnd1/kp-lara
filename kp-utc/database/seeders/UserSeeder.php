@@ -13,12 +13,12 @@ class UserSeeder extends Seeder
    public function run(): void
 {
     \App\Models\User::create([
-        'username' => 'lapangan',
-        'name' => 'Lapangan',
-        'email' => 'lapangan@utc.com',
+        'username' => 'reservasi',
+        'name' => 'Reservasi UTC',
+        'email' => 'reservasi@utc.com',
         'password' => \Illuminate\Support\Facades\Hash::make('test1234'),
         'status' => 'Available',
-        'id_role' => 3,
+        'id_role' => 2,
     ]);
 }
 }
