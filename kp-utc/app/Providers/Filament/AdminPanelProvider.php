@@ -27,7 +27,6 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-           //   ->login() // tanpa parameter
             ->homeUrl(fn () => route('filament.admin.pages.dashboard'))
             ->colors([
                 'primary' => Color::Amber,
@@ -55,7 +54,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->auth(fn (\App\Models\User $user) => $user->id_role === 2 && $user->status === 'Available');
+
     }
 
    /* public function boot(): void

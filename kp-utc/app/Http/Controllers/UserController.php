@@ -96,7 +96,7 @@ class UserController extends Controller
         //ini jalanin query update
         $user->update([
             'username' => $request->username,
-             'role_id' => $request->role_id,
+            'role_id' => $request->role_id,
             'status' => $request->status,
         ]);
 

@@ -17,7 +17,6 @@ class User extends Authenticatable implements FilamentUserContract
     protected $table = 'user';
     public $timestamps = false; // karena di table user tidak ada created_at & updated_at
 
-
     //ini isi smua atribut selain primary key
     protected $fillable = [
         'username',
@@ -27,7 +26,6 @@ class User extends Authenticatable implements FilamentUserContract
         'id_role',
         'status'
     ];
-    //kurang username gak se, sama name
 
     //hidden ini artinya data yang ada disini gaakan direturn waktu dipanggil
     protected $hidden = [
@@ -44,23 +42,17 @@ class User extends Authenticatable implements FilamentUserContract
     }
 
       public function canAccessPanel(Panel $panel): bool
-{
-    if ($panel->getId() === 'admin' && $this->id_role === 1 && $this->status === 'Available') {
-        return true;
-    }
+        {
+            if ($panel->getId() === 'admin' && $this->id_role === 1 && $this->status === 'Available') {
+                return true;
+            }
 
-    if ($panel->getId() === 'lapangan' && $this->id_role === 3 && $this->status === 'Available') {
-        return true;
-    }
+            if ($panel->getId() === 'lapangan' && $this->id_role === 3 && $this->status === 'Available') {
+                return true;
+            }
 
-    return false;
-}
-
-
-     /*public function getAuthIdentifierName()
-    {
-        return 'username'; // agar login pakai username
-    }*/
+            return false;
+        }
 
     //deklarasi bahwa id_role di table ini adalah milik table Role
     public function role()
@@ -96,6 +88,5 @@ class User extends Authenticatable implements FilamentUserContract
     public function logLaporan()
     {
         return $this->hasMany(LogLaporan::class, 'user_id');
-    }
-    
+    }   
 }
