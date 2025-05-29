@@ -53,7 +53,7 @@ class LapanganPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->auth(fn (\App\Models\User $user) => $user->id_role === 1 && $user->status === 'Available');
+            ]);
+          
     }
 }

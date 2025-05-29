@@ -54,9 +54,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->auth(fn (\App\Models\User $user) => $user->id_role === 2 && $user->status === 'Available');
-
+            ]);
     }
 
    /* public function boot(): void
