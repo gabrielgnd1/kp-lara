@@ -28,7 +28,7 @@ class LaporanResource extends Resource
                     ->maxLength(100),
                Forms\Components\FileUpload::make('foto_laporan')
                     ->image()
-                    ->required(),
+                    ->required(), //do this
                 Forms\Components\TextInput::make('decision')
                     ->required()
                     ->maxLength(100),
