@@ -51,6 +51,11 @@ class User extends Authenticatable implements FilamentUserContract
                 return true;
             }
 
+            if ($panel->getId() === 'reservasi' && $this->id_role === 2 && $this->status === 'Available') {
+                return true;
+            }
+            // Tambahkan kondisi untuk panel lain sesuai kebutuhan  
+
             return false;
         }
 

@@ -24,45 +24,63 @@ class LaporanResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('nama_laporan')
+                    ->label('Nama Laporan')
                     ->required()
                     ->maxLength(100),
                Forms\Components\FileUpload::make('foto_laporan')
+                    ->label('Foto Laporan')
                     ->image()
                     ->required(), //do this
-                Forms\Components\TextInput::make('decision')
+                Forms\Components\Select::make('prioritas')
+                    ->label('Prioritas')
                     ->required()
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('prioritas')
-                    ->required()
-                    ->maxLength(45),
+                    ->options([
+                        'Rendah' => 'Rendah',
+                        'Sedang' => 'Sedang',
+                        'Tinggi' => 'Tinggi',
+                    ])
+                    
+                    ->label('Prioritas'),
                 Forms\Components\DatePicker::make('tanggal_lapor')
-                    ->required(),
-                Forms\Components\DatePicker::make('tanggal_selesai')
+                    ->label('Tanggal Lapor')
+                    ->default(now())
                     ->required(),
                 Forms\Components\DatePicker::make('tanggal_deadline')
+                    ->label('Tanggal Deadline'),
+                Forms\Components\Select::make('tipe_laporan')
+                    ->label('Tipe Laporan')
+                    ->required()
+                    ->options([
+                        'Kebersihan' => 'Kebersihan',
+                        'Kerusakan' => 'Kerusakan',
+                        'Perbaikan' => 'Perbaikan',
+                        'Lainnya' => 'Lainnya',
+                    ]),
+               Forms\Components\Hidden::make('user_id')
+                    ->default(fn () => auth()->id())
                     ->required(),
-                Forms\Components\TextInput::make('tipe_laporan')
-                    ->required()
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('notifikasi')
-                    ->required()
-                    ->maxLength(45),
-                Forms\Components\TextInput::make('user_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('area_id')
-                    ->required()
-                    ->numeric(),
+                Forms\Components\Select::make('area_id') //diisi dari tabel area
+                    ->relationship('area', 'nama_area') //nama model, nama tabel
+                    ->required(),
+                Forms\Components\Hidden::make('decision')
+                    ->default('Belum Diproses'),
+                    
+                Forms\Components\Hidden::make('tanggal_selesai')
+                    ->default(fn () => now()->addMonth()->toDateString()),
+                Forms\Components\Hidden::make('notifikasi')
+                    ->default('Belum Dibaca')
             ]);
     }
 
-    public static function table(Table $table): Table
+    public static function table(Table $table): Table //ini buat SELECT
     {
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nama_laporan')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('foto_laporan'),
+                Tables\Columns\ImageColumn::make('foto_laporan')
+    ->disk('public') // pastikan sesuai disk yang kamu pakai di config/filesystems.php
+    ->label('Foto'),
                 Tables\Columns\TextColumn::make('decision')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('prioritas')

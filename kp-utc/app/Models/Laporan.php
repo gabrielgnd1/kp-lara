@@ -9,6 +9,7 @@ class Laporan extends Model
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
     //karena nama file Laporan & nama table bukan laporans jadi hrs dideklarasi
     protected $table = 'laporan';
+    public $timestamps = false;
 
     //ini isi smua atribut selain primary key
     protected $fillable = [

@@ -27,17 +27,20 @@ class Login extends Component
 
             $user = Auth::user();
 
-            //id 1 = "supervisor"
+          //lek 3 ke lapangan
             if ($user->id_role == 3 && $user->status === 'Available') {
                 return redirect(Filament::getPanel('lapangan')->getUrl());
             }
 
-            //id 2 = "admin"
+            //id 1 ke admin
             if ($user->id_role == 1 && $user->status === 'Available') {
                 return redirect(Filament::getPanel('admin')->getUrl());
             }
 
-            //id 3 = "superadmin"
+            //lek 2 ke resevasi
+            if ($user->id_role == 2 && $user->status === 'Available') {
+                return redirect(Filament::getPanel('reservasi')->getUrl());
+            }
 
             //tinggal tambah panel lain 
 

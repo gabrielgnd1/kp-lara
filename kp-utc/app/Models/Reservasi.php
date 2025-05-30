@@ -9,6 +9,7 @@ class Reservasi extends Model
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
     //karena nama file Reservasi & nama table bukan reservasis jadi hrs dideklarasi
     protected $table = 'reservasi';
+    public $timestamps = false;
 
     //ini isi smua atribut selain primary key
     protected $fillable = [
