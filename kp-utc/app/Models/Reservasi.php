@@ -71,4 +71,15 @@ class Reservasi extends Model
     {
         return $this->hasMany(PemesananMenuMakan::class, 'reservasi_id');
     }
+
+    public function fasilitas()
+{
+    return $this->belongsToMany(
+        Fasilitas::class,
+        'pemesanan_fasilitas', // ini nama tabel pivot yang BENAR
+        'reservasi_id',        // foreign key di tabel pivot mengarah ke model ini
+        'fasilitas_id'         // foreign key ke model Fasilitas
+    )->withPivot('jumlah'); // kalau kamu mau akses jumlah juga
+}
+
 }

@@ -33,4 +33,6 @@ class Fasilitas extends Model
     {
         return $this->belongsTo(HargaFasilitas::class, 'harga_fasilitas_id');
     }
+
+    
 }
