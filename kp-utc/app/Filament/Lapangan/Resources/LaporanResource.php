@@ -17,8 +17,8 @@ use Filament\Tables\Columns\TextColumn;
 class LaporanResource extends Resource
 {
     protected static ?string $model = Laporan::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationLabel = 'Detail Laporan';
 
     public static function form(Form $form): Form
     {
@@ -123,23 +123,25 @@ class LaporanResource extends Resource
         ->striped(false)
         ->actions([]) // hide edit/delete tombol default
         ->bulkActions([]);
-}
-
-
-
+    }
 
     public static function getRelations(): array
     {
         return [];
     }
 
+    public static function getSlug(): string
+    {
+        return 'detaillaporan';
+    }
+
     public static function getPages(): array
-{
-    return [
-        'index' => Pages\ListLaporans::route('/'),
-        'create' => Pages\CreateLaporan::route('/create'),
-        'edit' => Pages\EditLaporan::route('/{record}/edit'),
-        //'tambah' => Pages\TambahLaporan::routes('/tambah'), // ✅ ini custom page
-    ];
-}
+    {
+        return [
+            'index' => Pages\ListLaporans::route('/'),
+            'create' => Pages\CreateLaporan::route('/create'),
+            'edit' => Pages\EditLaporan::route('/{record}/edit'),
+            //'tambah' => Pages\TambahLaporan::routes('/tambah'), // ✅ ini custom page
+        ];
+    }
 }

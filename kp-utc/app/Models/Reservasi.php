@@ -22,12 +22,12 @@ class Reservasi extends Model
         'jumlah_laki_laki',
         'jumlah_perempuan',
         'informasi_tambahan',
-        'status',
+        'status_reservasi',
+        'status_pembayaran',
         'tanggal_dibuat',
         'id_pic_ioc',
         'id_pic_utc',
         'alamat',
-        'acc',
     ];
 
     //deklarasi bahwa field id_pic_ioc di tabel ini adalah milik table User
@@ -73,13 +73,13 @@ class Reservasi extends Model
     }
 
     public function fasilitas()
-{
-    return $this->belongsToMany(
-        Fasilitas::class,
-        'pemesanan_fasilitas', // ini nama tabel pivot yang BENAR
-        'reservasi_id',        // foreign key di tabel pivot mengarah ke model ini
-        'fasilitas_id'         // foreign key ke model Fasilitas
-    )->withPivot('jumlah'); // kalau kamu mau akses jumlah juga
-}
+    {
+        return $this->belongsToMany(
+            Fasilitas::class,
+            'pemesanan_fasilitas', 
+            'reservasi_id',        // foreign key di tabel pivot mengarah ke model ini
+            'fasilitas_id'         // foreign key ke model Fasilitas
+        )->withPivot('jumlah'); // kalau mau akses jumlah juga
+    }
 
 }

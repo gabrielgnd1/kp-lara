@@ -25,6 +25,7 @@ class ReservasiResource extends Resource
 {
     protected static ?string $model = Reservasi::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationLabel = 'Detail Reservasi';
 
     public static function form(Form $form): Form
     {
@@ -47,11 +48,11 @@ class ReservasiResource extends Resource
             TextInput::make('judul_kegiatan')->label('Judul Kegiatan')->required()->maxLength(100),
             DateTimePicker::make('waktu_check_in')->label('Waktu Check In')->required(),
             DateTimePicker::make('waktu_check_out')->label('Waktu Check Out')->required(),
-            TextInput::make('jumlah_laki')->label('Jumlah Laki-laki')->required()->numeric(),
+            TextInput::make('jumlah_laki_laki')->label('Jumlah Laki-laki')->required()->numeric(),
             TextInput::make('jumlah_perempuan')->label('Jumlah Perempuan')->required()->numeric(),
             Textarea::make('informasi_tambahan')->label('Informasi Tambahan')->default('')->columnSpanFull(),
 
-            Hidden::make('status')
+            Hidden::make('status_reservasi')
                 ->default(fn () => auth()->user()?->role_id === 5 ? 'ACC' : 'NOT ACC')
                 ->required(),
 
@@ -84,7 +85,7 @@ class ReservasiResource extends Resource
                                             ->label($fasilitas->nama)
                                             ->reactive()
                                             ->afterStateUpdated(function ($state, callable $set, Get $get) {
-                                                $stateAll = $get('__all');
+                                                $stateAll = $get('__all') ?? [];
                                                 $diskon = $stateAll['diskon_persen'] ?? 0;
                                                 $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
                                             }),
@@ -99,7 +100,7 @@ class ReservasiResource extends Resource
                                                 $get("fasilitas_selected.{$fasilitas->id}") === true)
                                             ->reactive()
                                             ->afterStateUpdated(function ($state, callable $set, Get $get) {
-                                                $stateAll = $get('__all');
+                                                $stateAll = $get('__all') ?? [];
                                                 $diskon = $stateAll['diskon_persen'] ?? 0;
                                                 $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
                                             }),
@@ -117,7 +118,7 @@ class ReservasiResource extends Resource
                 ->maxValue(100)
                 ->reactive()
                 ->afterStateUpdated(function ($state, callable $set, Get $get) {
-                    $stateAll = $get('__all');
+                    $stateAll = $get('__all') ?? [];
                     $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $state));
                 }),
 
@@ -159,6 +160,12 @@ class ReservasiResource extends Resource
     {
         return [];
     }
+
+    public static function getSlug(): string
+    {
+        return 'detailreservasi';
+    }
+
 
     public static function getPages(): array
     {
