@@ -20,6 +20,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Get;
+use Illuminate\Support\Facades\DB;
+use Filament\Notifications\Notification;
 
 class ReservasiResource extends Resource
 {
@@ -123,11 +125,16 @@ class ReservasiResource extends Resource
                 }),
 
             TextInput::make('estimasi_harga')
-                ->label('Estimasi Harga Akhir (Rp)')
-                ->disabled()
-                ->dehydrated(false)
-                ->reactive()
-                ->formatStateUsing(fn ($state) => number_format((int) $state, 0, ',', '.')),
+    ->label('Estimasi Harga Akhir (Rp)')
+    ->disabled()
+    ->dehydrated(false)
+    ->reactive()
+    ->formatStateUsing(fn ($state) => number_format((int) $state, 0, ',', '.'))
+    ->afterStateUpdated(function ($state, callable $set, Get $get) {
+        $stateAll = $get('__all') ?? [];
+        $diskon = $stateAll['diskon_persen'] ?? 0;
+        $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
+    }),
 
             DateTimePicker::make('tanggal_dibuat')->label('Tanggal Dibuat')->default(now())->required(),
         ]);
@@ -165,6 +172,7 @@ class ReservasiResource extends Resource
     {
         return 'detailreservasi';
     }
+    
 
 
     public static function getPages(): array
@@ -175,6 +183,83 @@ class ReservasiResource extends Resource
             'edit' => Pages\EditReservasi::route('/{record}/edit'),
         ];
     }
+
+   public function create(): void
+{
+    // Ambil data dari form
+    $state = $this->form->getState();
+
+    // Debug log untuk memeriksa data yang diterima
+    \Log::debug('Form state:', $state);
+
+    // Mulai transaksi untuk menyimpan data
+    DB::beginTransaction();
+
+    try {
+        // 1. Simpan data di tabel 'reservasi'
+        $reservasi = Reservasi::create([
+            'nama_pemesan' => $state['nama_pemesan'],
+            'no_telepon' => $state['no_telepon'],
+            'email' => $state['email'],
+            'judul_kegiatan' => $state['judul_kegiatan'],
+            'waktu_check_in' => $state['waktu_check_in'],
+            'waktu_check_out' => $state['waktu_check_out'],
+            'jumlah_laki_laki' => $state['jumlah_laki_laki'],
+            'jumlah_perempuan' => $state['jumlah_perempuan'],
+            'informasi_tambahan' => $state['informasi_tambahan'],
+            'status_reservasi' => $state['status_reservasi'],
+            'id_pic_ioc' => $state['id_pic_ioc'],
+            'id_pic_utc' => $state['id_pic_utc'],
+            'diskon_persen' => $state['diskon_persen'],
+            'estimasi_harga' => $state['estimasi_harga'],
+            'tanggal_dibuat' => $state['tanggal_dibuat'],
+        ]);
+
+        // 2. Simpan data fasilitas yang dipesan ke tabel 'pemesanan_fasilitas'
+        $fasilitasSelected = $state['fasilitas_selected'] ?? [];
+        $fasilitasJumlah = $state['fasilitas_jumlah'] ?? [];
+        
+        foreach ($fasilitasSelected as $fasilitasId => $isSelected) {
+            if ($isSelected) {
+                PemesananFasilitas::create([
+                    'reservasi_id' => $reservasi->id,
+                    'fasilitas_id' => $fasilitasId,
+                    'jumlah' => $fasilitasJumlah[$fasilitasId] ?? 1,  // Default 1 jika tidak ada jumlah yang dipilih
+                ]);
+            }
+        }
+
+        // 3. Simpan data pembayaran ke tabel 'pembayaran'
+        Pembayaran::create([
+            'reservasi_id' => $reservasi->id,
+            'jenis' => 'Tunai',  // Bisa disesuaikan dengan jenis pembayaran yang dipilih
+            'bukti_pembayaran' => 'path_to_bukti_pembayaran',  // Simpan path bukti pembayaran jika ada
+            'tanggal_pembayaran' => now(),  // Sesuaikan dengan waktu pembayaran
+        ]);
+
+        // Commit transaksi jika semua data berhasil disimpan
+        DB::commit();
+
+        // Kirim notifikasi sukses
+        Notification::make()
+            ->title('Reservasi berhasil dibuat!')
+            ->success()
+            ->send();
+
+        // Redirect ke halaman daftar reservasi setelah berhasil disimpan
+        $this->redirect(ReservasiResource::getUrl('index'));
+    } catch (\Exception $e) {
+        // Rollback transaksi jika terjadi kesalahan
+        DB::rollBack();
+        
+        // Kirim notifikasi error
+        Notification::make()
+            ->title('Terjadi kesalahan saat menyimpan data!')
+            ->danger()
+            ->send();
+    }
+}
+
 
     protected static function hitungTotalHarga(array $state, $diskonPersen = 0): int
     {

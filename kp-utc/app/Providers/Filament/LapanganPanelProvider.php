@@ -37,8 +37,8 @@ class LapanganPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Lapangan/Widgets'), for: 'App\\Filament\\Lapangan\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                //Widgets\AccountWidget::class,
+                //Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

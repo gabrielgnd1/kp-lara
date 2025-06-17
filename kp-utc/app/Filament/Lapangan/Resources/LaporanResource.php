@@ -82,37 +82,35 @@ class LaporanResource extends Resource
    public static function table(Table $table): Table
 {
     return $table
-        ->columns([
-            Card::make([
-                ImageColumn::make('foto_laporan')
-                    ->disk('public')
-                    ->path('laporan')
-                    ->height(180)
-                    ->width(180)
-                    ->extraAttributes(['class' => 'mx-auto rounded-md object-cover']),
+        ->columns([ 
+            ImageColumn::make('foto_laporan')
+                //->disk('public')
+                //->path('laporan')
+                ->height(180)
+                ->width(180)
+                ->extraAttributes(['class' => 'mx-auto rounded-md object-cover']),
 
-                TextColumn::make('nama_laporan')
-                    ->weight('bold')
-                    ->label('Nama'),
+            TextColumn::make('nama_laporan')
+                ->weight('bold')
+                ->label('Nama'),
 
-                TextColumn::make('tanggal_lapor')
-                    ->label('Tanggal')
-                    ->date(),
+            TextColumn::make('tanggal_lapor')
+                ->label('Tanggal')
+                ->date(),
 
-                TextColumn::make('prioritas')
-                    ->label('Prioritas')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'Tinggi' => 'danger',
-                        'Sedang' => 'warning',
-                        'Rendah' => 'success',
-                        default => 'gray',
-                    }),
+            TextColumn::make('prioritas')
+                ->label('Prioritas')
+                ->badge()
+                ->color(fn ($state) => match ($state) {
+                    'Tinggi' => 'danger',
+                    'Sedang' => 'warning',
+                    'Rendah' => 'success',
+                    default => 'gray',
+                }),
 
-                TextColumn::make('decision')
-                    ->label('Status')
-                    ->badge(),
-            ]),
+            TextColumn::make('decision')
+                ->label('Status')
+                ->badge(),
         ])
         ->contentGrid([
             'default' => 1,
@@ -123,7 +121,7 @@ class LaporanResource extends Resource
         ->striped(false)
         ->actions([]) // hide edit/delete tombol default
         ->bulkActions([]);
-    }
+}
 
     public static function getRelations(): array
     {
