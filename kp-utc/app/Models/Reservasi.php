@@ -82,4 +82,11 @@ class Reservasi extends Model
         )->withPivot('jumlah'); // kalau mau akses jumlah juga
     }
 
+    public function additional() {
+        return $this->belongsToMany(Additional::class, 'pemesanan_additional', 'reservasi_id', 'additional_id');
+    }
+
+    public function menuMakan() {
+        return $this->belongsToMany(MenuMakan::class, 'pemesanan_menu_makan', 'reservasi_id', 'menu_makan_id');
+    }
 }

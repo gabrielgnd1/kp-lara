@@ -112,6 +112,80 @@ class ReservasiResource extends Resource
                 ])
                 ->columns(1),
 
+            // Fieldset Additional
+            Fieldset::make('Additional')
+                ->schema([
+                    Group::make()
+                        ->schema(function (Get $get) {
+                            return \App\Models\Additional::query()
+                                ->where('status', 'Available')
+                                ->get()
+                                ->map(function ($additional) {
+                                    return Grid::make(2)->schema([
+                                        Checkbox::make("additional_selected.{$additional->id}")
+                                            ->label($additional->nama)
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                                                $stateAll = $get('__all') ?? [];
+                                                $diskon = $stateAll['diskon_persen'] ?? 0;
+                                                $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
+                                            }),
+
+                                        TextInput::make("additional_jumlah.{$additional->id}")
+                                            ->label('Jumlah')
+                                            ->numeric()
+                                            ->default(1)
+                                            ->required(fn ($get) => $get("additional_selected.{$additional->id}") === true)
+                                            ->visible(fn ($get) => $get("additional_selected.{$additional->id}") === true)
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                                                $stateAll = $get('__all') ?? [];
+                                                $diskon = $stateAll['diskon_persen'] ?? 0;
+                                                $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
+                                            }),
+                                    ]);
+                                })->toArray();
+                        }),
+                ])
+                ->columns(1),
+
+            // Fieldset Menu Makan
+            Fieldset::make('Menu Makan')
+                ->schema([
+                    Group::make()
+                        ->schema(function (Get $get) {
+                            return \App\Models\MenuMakan::query()
+                                ->where('status', 'Available')
+                                ->get()
+                                ->map(function ($menuMakan) {
+                                    return Grid::make(2)->schema([
+                                        Checkbox::make("menu_makan_selected.{$menuMakan->id}")
+                                            ->label($menuMakan->nama)
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                                                $stateAll = $get('__all') ?? [];
+                                                $diskon = $stateAll['diskon_persen'] ?? 0;
+                                                $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
+                                            }),
+
+                                        TextInput::make("menu_makan_jumlah.{$menuMakan->id}")
+                                            ->label('Jumlah')
+                                            ->numeric()
+                                            ->default(1)
+                                            ->required(fn ($get) => $get("menu_makan_selected.{$menuMakan->id}") === true)
+                                            ->visible(fn ($get) => $get("menu_makan_selected.{$menuMakan->id}") === true)
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                                                $stateAll = $get('__all') ?? [];
+                                                $diskon = $stateAll['diskon_persen'] ?? 0;
+                                                $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
+                                            }),
+                                    ]);
+                                })->toArray();
+                        }),
+                ])
+                ->columns(1),
+
             TextInput::make('diskon_persen')
                 ->label('Diskon (%)')
                 ->numeric()
@@ -125,16 +199,16 @@ class ReservasiResource extends Resource
                 }),
 
             TextInput::make('estimasi_harga')
-    ->label('Estimasi Harga Akhir (Rp)')
-    ->disabled()
-    ->dehydrated(false)
-    ->reactive()
-    ->formatStateUsing(fn ($state) => number_format((int) $state, 0, ',', '.'))
-    ->afterStateUpdated(function ($state, callable $set, Get $get) {
-        $stateAll = $get('__all') ?? [];
-        $diskon = $stateAll['diskon_persen'] ?? 0;
-        $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
-    }),
+            ->label('Estimasi Harga Akhir (Rp)')
+            ->disabled()
+            ->dehydrated(false)
+            ->reactive()
+            ->formatStateUsing(fn ($state) => number_format((int) $state, 0, ',', '.'))
+            ->afterStateUpdated(function ($state, callable $set, Get $get) {
+                $stateAll = $get('__all') ?? [];
+                $diskon = $stateAll['diskon_persen'] ?? 0;
+                $set('estimasi_harga', ReservasiResource::hitungTotalHarga($stateAll, $diskon));
+            }),
 
             DateTimePicker::make('tanggal_dibuat')->label('Tanggal Dibuat')->default(now())->required(),
         ]);
@@ -172,8 +246,6 @@ class ReservasiResource extends Resource
     {
         return 'detailreservasi';
     }
-    
-
 
     public static function getPages(): array
     {
@@ -185,84 +257,84 @@ class ReservasiResource extends Resource
     }
 
    public function create(): void
-{
-    // Ambil data dari form
-    $state = $this->form->getState();
+    {
+        // Ambil data dari form
+        $state = $this->form->getState();
 
-    // Debug log untuk memeriksa data yang diterima
-    \Log::debug('Form state:', $state);
+        // Debug log untuk memeriksa data yang diterima
+        dd($state);
 
-    // Mulai transaksi untuk menyimpan data
-    DB::beginTransaction();
+        // Mulai transaksi untuk menyimpan data
+        DB::beginTransaction();
 
-    try {
-        // 1. Simpan data di tabel 'reservasi'
-        $reservasi = Reservasi::create([
-            'nama_pemesan' => $state['nama_pemesan'],
-            'no_telepon' => $state['no_telepon'],
-            'email' => $state['email'],
-            'judul_kegiatan' => $state['judul_kegiatan'],
-            'waktu_check_in' => $state['waktu_check_in'],
-            'waktu_check_out' => $state['waktu_check_out'],
-            'jumlah_laki_laki' => $state['jumlah_laki_laki'],
-            'jumlah_perempuan' => $state['jumlah_perempuan'],
-            'informasi_tambahan' => $state['informasi_tambahan'],
-            'status_reservasi' => $state['status_reservasi'],
-            'id_pic_ioc' => $state['id_pic_ioc'],
-            'id_pic_utc' => $state['id_pic_utc'],
-            'diskon_persen' => $state['diskon_persen'],
-            'estimasi_harga' => $state['estimasi_harga'],
-            'tanggal_dibuat' => $state['tanggal_dibuat'],
-        ]);
+        try {
+            // 1. Simpan data di tabel 'reservasi'
+            $reservasi = Reservasi::create([
+                'nama_pemesan' => $state['nama_pemesan'],
+                'no_telepon' => $state['no_telepon'],
+                'email' => $state['email'],
+                'judul_kegiatan' => $state['judul_kegiatan'],
+                'waktu_check_in' => $state['waktu_check_in'],
+                'waktu_check_out' => $state['waktu_check_out'],
+                'jumlah_laki_laki' => $state['jumlah_laki_laki'],
+                'jumlah_perempuan' => $state['jumlah_perempuan'],
+                'informasi_tambahan' => $state['informasi_tambahan'],
+                'status_reservasi' => $state['status_reservasi'],
+                'id_pic_ioc' => $state['id_pic_ioc'],
+                'id_pic_utc' => $state['id_pic_utc'],
+                'diskon_persen' => $state['diskon_persen'],
+                'estimasi_harga' => $state['estimasi_harga'],
+                'tanggal_dibuat' => $state['tanggal_dibuat'],
+            ]);
 
-        // 2. Simpan data fasilitas yang dipesan ke tabel 'pemesanan_fasilitas'
-        $fasilitasSelected = $state['fasilitas_selected'] ?? [];
-        $fasilitasJumlah = $state['fasilitas_jumlah'] ?? [];
-        
-        foreach ($fasilitasSelected as $fasilitasId => $isSelected) {
-            if ($isSelected) {
-                PemesananFasilitas::create([
-                    'reservasi_id' => $reservasi->id,
-                    'fasilitas_id' => $fasilitasId,
-                    'jumlah' => $fasilitasJumlah[$fasilitasId] ?? 1,  // Default 1 jika tidak ada jumlah yang dipilih
-                ]);
+            // 2. Simpan data fasilitas yang dipesan ke tabel 'pemesanan_fasilitas'
+            $fasilitasSelected = $state['fasilitas_selected'] ?? [];
+            $fasilitasJumlah = $state['fasilitas_jumlah'] ?? [];
+            
+            foreach ($fasilitasSelected as $fasilitasId => $isSelected) {
+                if ($isSelected) {
+                    PemesananFasilitas::create([
+                        'reservasi_id' => $reservasi->id,
+                        'fasilitas_id' => $fasilitasId,
+                        'jumlah' => $fasilitasJumlah[$fasilitasId] ?? 1,  // Default 1 jika tidak ada jumlah yang dipilih
+                    ]);
+                }
             }
+
+            // 3. Simpan data pembayaran ke tabel 'pembayaran'
+            Pembayaran::create([
+                'reservasi_id' => $reservasi->id,
+                'jenis' => 'Tunai',  // Bisa disesuaikan dengan jenis pembayaran yang dipilih
+                'bukti_pembayaran' => 'path_to_bukti_pembayaran',  // Simpan path bukti pembayaran jika ada
+                'tanggal_pembayaran' => now(),  // Sesuaikan dengan waktu pembayaran
+            ]);
+
+            // Commit transaksi jika semua data berhasil disimpan
+            DB::commit();
+
+            // Kirim notifikasi sukses
+            Notification::make()
+                ->title('Reservasi berhasil dibuat!')
+                ->success()
+                ->send();
+
+            // Redirect ke halaman daftar reservasi setelah berhasil disimpan
+            $this->redirect(ReservasiResource::getUrl('index'));
+        } catch (\Exception $e) {
+            // Rollback transaksi jika terjadi kesalahan
+            DB::rollBack();
+            
+            // Kirim notifikasi error
+            Notification::make()
+                ->title('Terjadi kesalahan saat menyimpan data!')
+                ->danger()
+                ->send();
         }
-
-        // 3. Simpan data pembayaran ke tabel 'pembayaran'
-        Pembayaran::create([
-            'reservasi_id' => $reservasi->id,
-            'jenis' => 'Tunai',  // Bisa disesuaikan dengan jenis pembayaran yang dipilih
-            'bukti_pembayaran' => 'path_to_bukti_pembayaran',  // Simpan path bukti pembayaran jika ada
-            'tanggal_pembayaran' => now(),  // Sesuaikan dengan waktu pembayaran
-        ]);
-
-        // Commit transaksi jika semua data berhasil disimpan
-        DB::commit();
-
-        // Kirim notifikasi sukses
-        Notification::make()
-            ->title('Reservasi berhasil dibuat!')
-            ->success()
-            ->send();
-
-        // Redirect ke halaman daftar reservasi setelah berhasil disimpan
-        $this->redirect(ReservasiResource::getUrl('index'));
-    } catch (\Exception $e) {
-        // Rollback transaksi jika terjadi kesalahan
-        DB::rollBack();
-        
-        // Kirim notifikasi error
-        Notification::make()
-            ->title('Terjadi kesalahan saat menyimpan data!')
-            ->danger()
-            ->send();
     }
-}
-
 
     protected static function hitungTotalHarga(array $state, $diskonPersen = 0): int
     {
+        // Menghitung total harga fasilitas
         $selectedIds = collect($state)
             ->filter(fn ($val, $key) => str_starts_with($key, 'fasilitas_selected.') && $val === true)
             ->map(fn ($val, $key) => (int) str_replace('fasilitas_selected.', '', $key))
@@ -270,14 +342,48 @@ class ReservasiResource extends Resource
 
         $fasilitasDipilih = Fasilitas::whereIn('id', $selectedIds)->get();
 
-        $total = 0;
+        $totalFasilitas = 0;
         foreach ($fasilitasDipilih as $fasilitas) {
             $jumlah = $state["fasilitas_jumlah.{$fasilitas->id}"] ?? 0;
-            $total += $fasilitas->harga * (int) $jumlah;
+            $totalFasilitas += $fasilitas->harga * (int) $jumlah;
         }
 
+        // Menghitung total harga additional
+        $selectedAdditionalIds = collect($state)
+            ->filter(fn ($val, $key) => str_starts_with($key, 'additional_selected.') && $val === true)
+            ->map(fn ($val, $key) => (int) str_replace('additional_selected.', '', $key))
+            ->toArray();
+
+        $additionalDipilih = \App\Models\Additional::whereIn('id', $selectedAdditionalIds)->get();
+
+        $totalAdditional = 0;
+        foreach ($additionalDipilih as $additional) {
+            $jumlah = $state["additional_jumlah.{$additional->id}"] ?? 0;
+            $totalAdditional += $additional->harga * (int) $jumlah;
+        }
+
+        // Menghitung total harga menu makan
+        $selectedMenuMakanIds = collect($state)
+            ->filter(fn ($val, $key) => str_starts_with($key, 'menu_makan_selected.') && $val === true)
+            ->map(fn ($val, $key) => (int) str_replace('menu_makan_selected.', '', $key))
+            ->toArray();
+
+        $menuMakanDipilih = \App\Models\MenuMakan::whereIn('id', $selectedMenuMakanIds)->get();
+
+        $totalMenuMakan = 0;
+        foreach ($menuMakanDipilih as $menuMakan) {
+            $jumlah = $state["menu_makan_jumlah.{$menuMakan->id}"] ?? 0;
+            $totalMenuMakan += $menuMakan->harga * (int) $jumlah;
+        }
+
+        // Menjumlahkan semua harga
+        $total = $totalFasilitas + $totalAdditional + $totalMenuMakan;
+
+        // Menghitung diskon
         $diskon = (int) $diskonPersen;
         $totalDiskon = $total * ($diskon / 100);
+
+        // Mengembalikan harga total setelah diskon
         return (int) round($total - $totalDiskon);
     }
 }

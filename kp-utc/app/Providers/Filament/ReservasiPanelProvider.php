@@ -38,7 +38,7 @@ class ReservasiPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Reservasi/Widgets'), for: 'App\\Filament\\Reservasi\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                //Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
