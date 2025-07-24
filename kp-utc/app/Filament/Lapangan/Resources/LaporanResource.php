@@ -84,11 +84,11 @@ class LaporanResource extends Resource
     return $table
         ->columns([ 
             ImageColumn::make('foto_laporan')
-                //->disk('public')
-                //->path('laporan')
-                ->height(180)
+                ->disk('public')
+                ->visibility('public')
                 ->width(180)
-                ->extraAttributes(['class' => 'mx-auto rounded-md object-cover']),
+                ->height(180)
+                ->extraAttributes(['class' => 'rounded-md object-cover mx-auto']),
 
             TextColumn::make('nama_laporan')
                 ->weight('bold')
