@@ -22,6 +22,7 @@ class Additional extends Model
         'eksternal_weekday_tidakmenginap',
         'eksternal_weekend_tidakmenginap',
         'deskripsi',
+        //status: aktif/tidak 
         'status'
     ];
 
