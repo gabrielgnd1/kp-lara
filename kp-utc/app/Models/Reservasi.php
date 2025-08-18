@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class Reservasi extends Model
 {
@@ -12,29 +14,54 @@ class Reservasi extends Model
 
     // Only columns that actually exist in your DB
     protected $fillable = [
-        'nama_pemesan',
-        'no_telepon',
-        'email',
-        'judul_kegiatan',
-        'waktu_check_in',
-        'waktu_check_out',
-        'jumlah_laki',        // ← matches DB
-        'jumlah_perempuan',
-        'informasi_tambahan',
-        'status_reservasi',
-        'status_pembayaran',
-        'tanggal_dibuat',
-        'id_pic_ioc',
-        'id_pic_utc',
+        'nama_pemesan','no_telepon','email','judul_kegiatan',
+        'waktu_check_in','waktu_check_out',
+        'jumlah_laki','jumlah_perempuan','informasi_tambahan',
+        'status_pembayaran','tanggal_dibuat', // OK
+        // intentionally exclude: status_reservasi, id_pic_ioc, id_pic_utc
     ];
+
+     protected $guarded = ['status_reservasi','id_pic_ioc','id_pic_utc'];
 
     protected $casts = [
         'waktu_check_in'  => 'datetime',
         'waktu_check_out' => 'datetime',
         'tanggal_dibuat'  => 'datetime',
+        'jumlah_laki' => 'integer',
+        'jumlah_perempuan' => 'integer',
     ];
 
-    // Relationships (keep if you use them elsewhere)
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $u = Auth::user();
+
+            // safe defaults
+            $model->status_pembayaran   = $model->status_pembayaran   ?? 'BARU';
+            $model->jumlah_laki         = $model->jumlah_laki         ?? 0;
+            $model->jumlah_perempuan    = $model->jumlah_perempuan    ?? 0;
+            $model->informasi_tambahan  = $model->informasi_tambahan  ?? '';
+
+            // role rules
+            if ($u && ((int) $u->id_role === 2 || optional($u->role)->nama === 'Admin UTC')) {
+                $model->status_reservasi = 'ACC';
+                $model->id_pic_utc       = $u->id;
+                $model->id_pic_ioc       = $model->id_pic_ioc ?? 0;  // use 0 unless you altered DB to allow NULL
+            } elseif ($u && ((int) $u->id_role === 4 || optional($u->role)->nama === 'Admin IOC')) {
+                $model->status_reservasi = 'NOT ACC';
+                $model->id_pic_ioc       = $u->id;
+                $model->id_pic_utc       = $model->id_pic_utc ?? 0;
+            } else {
+                $model->status_reservasi = 'NOT ACC';
+                $model->id_pic_ioc       = $model->id_pic_ioc ?? 0;
+                $model->id_pic_utc       = $model->id_pic_utc ?? 0;
+            }
+
+            // explicit timestamp (Jakarta)
+            $model->tanggal_dibuat = $model->tanggal_dibuat ?? Carbon::now('Asia/Jakarta');
+        });
+    }
+
     public function pic_ioc()
     {
         return $this->belongsTo(User::class, 'id_pic_ioc');
