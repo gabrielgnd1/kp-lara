@@ -50,17 +50,17 @@ class ReservasiResource extends Resource
                 ->reactive()
                 ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
-            TextInput::make('nama_pemesan')->label('Nama Pemesan')->required()->maxLength(100),
-            TextInput::make('no_telepon')->label('No Telepon')->required()->maxLength(20),
-            TextInput::make('email')->label('Email')->email()->required()->maxLength(100),
-            TextInput::make('judul_kegiatan')->label('Judul Kegiatan')->required()->maxLength(100),
+            Forms\Components\TextInput::make('nama_pemesan')->label('Nama Pemesan')->required()->maxLength(100),
+            Forms\Components\TextInput::make('no_telepon')->label('No Telepon')->required()->maxLength(20),
+            Forms\Components\TextInput::make('email')->label('Email')->email()->required()->maxLength(100),
+            Forms\Components\TextInput::make('judul_kegiatan')->label('Judul Kegiatan')->required()->maxLength(100),
 
             DateTimePicker::make('waktu_check_in')->label('Waktu Check In')->required(),
             DateTimePicker::make('waktu_check_out')->label('Waktu Check Out')->required(),
 
             // === match DB column name: jumlah_laki
-            TextInput::make('jumlah_laki')->label('Jumlah Laki-laki')->required()->numeric(),
-            TextInput::make('jumlah_perempuan')->label('Jumlah Perempuan')->required()->numeric(),
+            Forms\Components\TextInput::make('jumlah_laki')->label('Jumlah Laki-laki')->required()->numeric(),
+            Forms\Components\TextInput::make('jumlah_perempuan')->label('Jumlah Perempuan')->required()->numeric(),
 
             Textarea::make('informasi_tambahan')->label('Informasi Tambahan')->default('')->columnSpanFull(),
 
@@ -68,18 +68,15 @@ class ReservasiResource extends Resource
                 ->default(fn () => auth()->user()?->role_id === 5 ? 'ACC' : 'NOT ACC')
                 ->required(),
 
-            // === NEW: matches DB column
             Hidden::make('status_pembayaran')
-                ->default('Belum Bayar')
+                ->default('BARU')
                 ->required(),
 
             Hidden::make('id_pic_ioc')
-                ->default(fn () => auth()->user()?->role_id === 5 ? auth()->id() : null)
-                ->required(),
+                ->default(fn () => auth()->user()?->role_id === 5 ? auth()->id() : null),
 
             Hidden::make('id_pic_utc')
-                ->default(fn () => auth()->user()?->role_id === 7 ? auth()->id() : null)
-                ->required(),
+                ->default(fn () => auth()->user()?->role_id === 7 ? auth()->id() : null),
 
             Fieldset::make('Fasilitas yang Dipesan')
                 ->disabled(fn (Get $get) => $get('ubaya_member') === null || $get('hari_tipe') === null)
@@ -99,6 +96,7 @@ class ReservasiResource extends Resource
                                         Checkbox::make("fasilitas_selected.{$fasilitas->id}")
                                             ->label($fasilitas->nama)
                                             ->reactive()
+                                            ->dehydrated(false) // keep out of reservasi insert
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
                                         TextInput::make("fasilitas_jumlah.{$fasilitas->id}")
@@ -108,6 +106,7 @@ class ReservasiResource extends Resource
                                             ->required(fn ($get) => $get("fasilitas_selected.{$fasilitas->id}") === true)
                                             ->visible(fn ($get) => $get("fasilitas_selected.{$fasilitas->id}") === true)
                                             ->reactive()
+                                            ->dehydrated(false) // keep out of reservasi insert
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
                                     ]);
                                 })->toArray();
@@ -127,6 +126,7 @@ class ReservasiResource extends Resource
                                         Checkbox::make("additional_selected.{$additional->id}")
                                             ->label($additional->nama)
                                             ->reactive()
+                                            ->dehydrated(false)
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
                                         TextInput::make("additional_jumlah.{$additional->id}")
@@ -136,6 +136,7 @@ class ReservasiResource extends Resource
                                             ->required(fn ($get) => $get("additional_selected.{$additional->id}") === true)
                                             ->visible(fn ($get) => $get("additional_selected.{$additional->id}") === true)
                                             ->reactive()
+                                            ->dehydrated(false)
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
                                     ]);
                                 })->toArray();
@@ -155,6 +156,7 @@ class ReservasiResource extends Resource
                                         Checkbox::make("menu_makan_selected.{$menuMakan->id}")
                                             ->label($menuMakan->nama)
                                             ->reactive()
+                                            ->dehydrated(false)
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
                                         TextInput::make("menu_makan_jumlah.{$menuMakan->id}")
@@ -164,6 +166,7 @@ class ReservasiResource extends Resource
                                             ->required(fn ($get) => $get("menu_makan_selected.{$menuMakan->id}") === true)
                                             ->visible(fn ($get) => $get("menu_makan_selected.{$menuMakan->id}") === true)
                                             ->reactive()
+                                            ->dehydrated(false)
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
                                     ]);
                                 })->toArray();
@@ -205,16 +208,16 @@ class ReservasiResource extends Resource
                 Tables\Columns\TextColumn::make('waktu_check_out')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('jumlah_laki')->numeric()->sortable(),
                 Tables\Columns\TextColumn::make('jumlah_perempuan')->numeric()->sortable(),
-                Tables\Columns\TextColumn::make('status_reservasi'),
-                Tables\Columns\TextColumn::make('status_pembayaran'),
+                Tables\Columns\TextColumn::make('status_reservasi')->badge(),
+                Tables\Columns\TextColumn::make('status_pembayaran')->badge(),
                 Tables\Columns\TextColumn::make('tanggal_dibuat')->dateTime()->sortable(),
             ])
+            ->paginated()
+            ->striped(false)
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array
@@ -229,22 +232,18 @@ class ReservasiResource extends Resource
 
     public static function getPages(): array
     {
+        // no separate "create" page — we'll create via modal on the List page
         return [
-            'index'  => Pages\ListReservasis::route('/'),
-            'create' => Pages\CreateReservasi::route('/create'),
-            'edit'   => Pages\EditReservasi::route('/{record}/edit'),
+            'index' => Pages\ListReservasis::route('/'),
+            'edit'  => Pages\EditReservasi::route('/{record}/edit'),
         ];
     }
 
-    /**
-     * Versi FIX: hitung total langsung dari $get (tanpa __all).
-     */
     protected static function hitungTotalHargaFromGet(Get $get, int $diskonPersen = 0): int
     {
-        // --- Fasilitas
-        $fasilitasSelected = array_filter($get('fasilitas_selected') ?? []); // [id => true/false]
+        $fasilitasSelected = array_filter($get('fasilitas_selected') ?? []);
         $fasilitasIds = array_map('intval', array_keys($fasilitasSelected));
-        $fasilitasJumlah = $get('fasilitas_jumlah') ?? [];                   // [id => jumlah]
+        $fasilitasJumlah = $get('fasilitas_jumlah') ?? [];
 
         $totalFasilitas = 0;
         if (!empty($fasilitasIds)) {
@@ -256,11 +255,9 @@ class ReservasiResource extends Resource
             }
         }
 
-        // --- Additional
         $additionalSelected = array_filter($get('additional_selected') ?? []);
         $additionalIds = array_map('intval', array_keys($additionalSelected));
         $additionalJumlah = $get('additional_jumlah') ?? [];
-
         $totalAdditional = 0;
         if (!empty($additionalIds)) {
             $items = \App\Models\Additional::whereIn('id', $additionalIds)->get()->keyBy('id');
@@ -271,11 +268,9 @@ class ReservasiResource extends Resource
             }
         }
 
-        // --- Menu Makan
         $menuSelected = array_filter($get('menu_makan_selected') ?? []);
         $menuIds = array_map('intval', array_keys($menuSelected));
         $menuJumlah = $get('menu_makan_jumlah') ?? [];
-
         $totalMenu = 0;
         if (!empty($menuIds)) {
             $items = \App\Models\MenuMakan::whereIn('id', $menuIds)->get()->keyBy('id');
