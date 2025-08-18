@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reservasi extends Model
 {
-    //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
-    //karena nama file Reservasi & nama table bukan reservasis jadi hrs dideklarasi
+    // Table name & timestamps
     protected $table = 'reservasi';
     public $timestamps = false;
 
-    //ini isi smua atribut selain primary key
+    // Only columns that actually exist in your DB
     protected $fillable = [
         'nama_pemesan',
         'no_telepon',
@@ -19,7 +18,7 @@ class Reservasi extends Model
         'judul_kegiatan',
         'waktu_check_in',
         'waktu_check_out',
-        'jumlah_laki_laki',
+        'jumlah_laki',        // ← matches DB
         'jumlah_perempuan',
         'informasi_tambahan',
         'status_reservasi',
@@ -27,46 +26,45 @@ class Reservasi extends Model
         'tanggal_dibuat',
         'id_pic_ioc',
         'id_pic_utc',
-        'alamat',
     ];
 
-    //deklarasi bahwa field id_pic_ioc di tabel ini adalah milik table User
+    protected $casts = [
+        'waktu_check_in'  => 'datetime',
+        'waktu_check_out' => 'datetime',
+        'tanggal_dibuat'  => 'datetime',
+    ];
+
+    // Relationships (keep if you use them elsewhere)
     public function pic_ioc()
     {
         return $this->belongsTo(User::class, 'id_pic_ioc');
     }
 
-    //deklarasi bahwa field id_pic_utc di tabel ini adalah milik table User
     public function pic_utc()
     {
         return $this->belongsTo(User::class, 'id_pic_utc');
     }
 
-    //deklarasi bahwa field reservasi_id di tabel Pembayaran adalah milik tabel Reservasi
     public function pembayaran()
     {
         return $this->hasOne(Pembayaran::class, 'reservasi_id');
     }
 
-    //deklarasi bahwa field reservasi_id di tabel DokumenReservasi adalah milik tabel Reservasi
     public function dokumenReservasi()
     {
         return $this->hasMany(DokumenReservasi::class, 'reservasi_id');
     }
 
-    //deklarasi bahwa field reservasi_id di tabel PemesananFasilitas adalah milik tabel Reservasi
     public function pemesananFasilitas()
     {
         return $this->hasMany(PemesananFasilitas::class, 'reservasi_id');
     }
 
-    //deklarasi bahwa field reservasi_id di tabel PemesananAdditional adalah milik tabel Reservasi
     public function pemesananAdditional()
     {
         return $this->hasMany(PemesananAdditional::class, 'reservasi_id');
     }
 
-    //deklarasi bahwa field reservasi_id di tabel PemesananMenuMakan adalah milik tabel Reservasi
     public function pemesananMenuMakan()
     {
         return $this->hasMany(PemesananMenuMakan::class, 'reservasi_id');
@@ -76,17 +74,19 @@ class Reservasi extends Model
     {
         return $this->belongsToMany(
             Fasilitas::class,
-            'pemesanan_fasilitas', 
-            'reservasi_id',        // foreign key di tabel pivot mengarah ke model ini
-            'fasilitas_id'         // foreign key ke model Fasilitas
-        )->withPivot('jumlah'); // kalau mau akses jumlah juga
+            'pemesanan_fasilitas',
+            'reservasi_id',
+            'fasilitas_id'
+        )->withPivot('jumlah');
     }
 
-    public function additional() {
+    public function additional()
+    {
         return $this->belongsToMany(Additional::class, 'pemesanan_additional', 'reservasi_id', 'additional_id');
     }
 
-    public function menuMakan() {
+    public function menuMakan()
+    {
         return $this->belongsToMany(MenuMakan::class, 'pemesanan_menu_makan', 'reservasi_id', 'menu_makan_id');
     }
 }

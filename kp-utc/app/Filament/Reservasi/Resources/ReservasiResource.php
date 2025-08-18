@@ -20,8 +20,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Get;
-use Illuminate\Support\Facades\DB;
-use Filament\Notifications\Notification;
 
 class ReservasiResource extends Resource
 {
@@ -56,14 +54,23 @@ class ReservasiResource extends Resource
             TextInput::make('no_telepon')->label('No Telepon')->required()->maxLength(20),
             TextInput::make('email')->label('Email')->email()->required()->maxLength(100),
             TextInput::make('judul_kegiatan')->label('Judul Kegiatan')->required()->maxLength(100),
+
             DateTimePicker::make('waktu_check_in')->label('Waktu Check In')->required(),
             DateTimePicker::make('waktu_check_out')->label('Waktu Check Out')->required(),
-            TextInput::make('jumlah_laki_laki')->label('Jumlah Laki-laki')->required()->numeric(),
+
+            // === match DB column name: jumlah_laki
+            TextInput::make('jumlah_laki')->label('Jumlah Laki-laki')->required()->numeric(),
             TextInput::make('jumlah_perempuan')->label('Jumlah Perempuan')->required()->numeric(),
+
             Textarea::make('informasi_tambahan')->label('Informasi Tambahan')->default('')->columnSpanFull(),
 
             Hidden::make('status_reservasi')
                 ->default(fn () => auth()->user()?->role_id === 5 ? 'ACC' : 'NOT ACC')
+                ->required(),
+
+            // === NEW: matches DB column
+            Hidden::make('status_pembayaran')
+                ->default('Belum Bayar')
                 ->required(),
 
             Hidden::make('id_pic_ioc')
@@ -198,7 +205,8 @@ class ReservasiResource extends Resource
                 Tables\Columns\TextColumn::make('waktu_check_out')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('jumlah_laki')->numeric()->sortable(),
                 Tables\Columns\TextColumn::make('jumlah_perempuan')->numeric()->sortable(),
-                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\TextColumn::make('status_reservasi'),
+                Tables\Columns\TextColumn::make('status_pembayaran'),
                 Tables\Columns\TextColumn::make('tanggal_dibuat')->dateTime()->sortable(),
             ])
             ->actions([
@@ -222,55 +230,10 @@ class ReservasiResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListReservasis::route('/'),
+            'index'  => Pages\ListReservasis::route('/'),
             'create' => Pages\CreateReservasi::route('/create'),
-            'edit' => Pages\EditReservasi::route('/{record}/edit'),
+            'edit'   => Pages\EditReservasi::route('/{record}/edit'),
         ];
-    }
-
-    public function create(): void
-    {
-        $state = $this->form->getState();
-
-        DB::beginTransaction();
-
-        try {
-            $reservasi = Reservasi::create([
-                'nama_pemesan'      => $state['nama_pemesan'],
-                'no_telepon'        => $state['no_telepon'],
-                'email'             => $state['email'],
-                'judul_kegiatan'    => $state['judul_kegiatan'],
-                'waktu_check_in'    => $state['waktu_check_in'],
-                'waktu_check_out'   => $state['waktu_check_out'],
-                'jumlah_laki_laki'  => $state['jumlah_laki_laki'],
-                'jumlah_perempuan'  => $state['jumlah_perempuan'],
-                'informasi_tambahan'=> $state['informasi_tambahan'],
-                'status_reservasi'  => $state['status_reservasi'],
-                'id_pic_ioc'        => $state['id_pic_ioc'],
-                'id_pic_utc'        => $state['id_pic_utc'],
-                'diskon_persen'     => $state['diskon_persen'] ?? 0,
-                'estimasi_harga'    => $state['estimasi_harga'] ?? 0,
-                'tanggal_dibuat'    => $state['tanggal_dibuat'],
-            ]);
-
-            DB::commit();
-
-            Notification::make()
-                ->title('Reservasi berhasil dibuat!')
-                ->success()
-                ->send();
-
-            $this->redirect(ReservasiResource::getUrl('index'));
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Notification::make()
-                ->title('Terjadi kesalahan saat menyimpan data!')
-                ->danger()
-                ->send();
-
-            throw $e;
-        }
     }
 
     /**
