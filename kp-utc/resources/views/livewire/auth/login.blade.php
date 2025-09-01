@@ -1,34 +1,60 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-    <div class="max-w-md w-full bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-center text-2xl font-bold text-gray-700">Login</h2>
+{{-- resources/views/livewire/auth/login.blade.php --}}
+<div class="min-h-[100dvh] flex items-center justify-center px-4 bg-[#0B5D3B]">
+    <div class="w-full max-w-sm bg-white/95 backdrop-blur-xl p-6 sm:p-8 rounded-2xl shadow-xl">
+        {{-- Header --}}
+        <div class="mb-6 text-center">
+            {{-- Logo bisa ditaruh di sini --}}
+            {{-- <img src="{{ asset('images/logo.png') }}" class="mx-auto h-12 mb-3" alt="Logo"> --}}
+            <h2 class="text-2xl font-bold text-[#1F2937]">Login</h2>
+            <p class="text-sm text-gray-500 mt-1">Masuk untuk melanjutkan</p>
+        </div>
 
-        <form wire:submit.prevent="login" class="mt-6 space-y-4">
+        {{-- Form --}}
+        <form wire:submit.prevent="login" class="space-y-4">
+            {{-- Email --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" wire:model.defer="email" required
-                       class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500" />
-                @error('email') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input id="email" type="email" wire:model.defer="email" required
+                       class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm 
+                              focus:outline-none focus:ring-2 focus:ring-[#7BB542]"
+                       placeholder="you@email.com" />
+                @error('email') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
+            {{-- Password --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" wire:model.defer="password" required
-                       class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500" />
-                @error('password') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input id="password" type="password" wire:model.defer="password" required
+                       class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm 
+                              focus:outline-none focus:ring-2 focus:ring-[#7BB542]"
+                       placeholder="••••••••" />
+                @error('password') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <div class="flex items-center">
-                <input id="remember" type="checkbox" wire:model="remember"
-                       class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                <label for="remember" class="ml-2 block text-sm text-gray-900">Remember me</label>
+            {{-- Remember me --}}
+            <div class="flex items-center justify-between text-sm">
+                <label class="inline-flex items-center gap-2 text-gray-700">
+                    <input id="remember" type="checkbox" wire:model="remember"
+                           class="rounded border-gray-300 focus:ring-2 focus:ring-[#7BB542]" />
+                    Remember me
+                </label>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" class="text-[#0B5D3B] hover:underline font-medium">Daftar</a>
+                @endif
             </div>
 
-            <div>
-                <button type="submit"
-                        class="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-primary-600 hover:bg-primary-700">
-                    Login
-                </button>
-            </div>
+            {{-- Submit --}}
+            <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-lg
+                           text-white shadow-md transition
+                           bg-[#7BB542] hover:bg-[#689a3b] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]">
+                Login
+            </button>
         </form>
+
+        {{-- Footer --}}
+        <p class="mt-6 text-center text-xs text-[#D4AF37]">
+            © {{ now()->year }} — UTC IOC / UPC
+        </p>
     </div>
 </div>
