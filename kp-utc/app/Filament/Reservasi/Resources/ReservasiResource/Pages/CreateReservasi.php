@@ -13,7 +13,7 @@ class CreateReservasi extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Only DB columns here
+        // Hanya kolom tabel reservasi
         return [
             'nama_pemesan'       => $data['nama_pemesan'] ?? null,
             'no_telepon'         => $data['no_telepon'] ?? null,
@@ -35,14 +35,14 @@ class CreateReservasi extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         return DB::transaction(function () use ($data) {
-            $modelClass = static::getModel();
+            $modelClass = static::getModel();   // App\Models\Reservasi
             return $modelClass::create($data);
         });
     }
 
     protected function afterCreate(): void
     {
-        // Includes our mirrored Hidden arrays
+        // Form state sudah berisi array mirror (hidden) untuk fasilitas/additional/menu
         $state = $this->form->getState();
 
         ReservasiResource::syncPivotsFromFormState($this->record, $state);

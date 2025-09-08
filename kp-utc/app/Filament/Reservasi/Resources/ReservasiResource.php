@@ -31,7 +31,7 @@ class ReservasiResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // Recalc estimasi
+        // Helper: hitung & set estimasi harga dari state saat ini
         $recalc = function (callable $set, Get $get) {
             $diskon = (int) ($get('diskon_persen') ?? 0);
             $set('estimasi_harga', self::hitungTotalHargaFromGet($get, $diskon));
@@ -82,7 +82,7 @@ class ReservasiResource extends Resource
             Hidden::make('id_pic_ioc')->default(fn () => auth()->user()?->role_id === 5 ? auth()->id() : null),
             Hidden::make('id_pic_utc')->default(fn () => auth()->user()?->role_id === 7 ? auth()->id() : null),
 
-            // MIRROR ARRAYS (so they're present in form state on create)
+            // ---------- MIRROR ARRAYS (agar ikut ter-dehydrate & tersedia saat Create) ----------
             Hidden::make('fasilitas_selected')->default([])->dehydrated(true),
             Hidden::make('fasilitas_jumlah')->default([])->dehydrated(true),
             Hidden::make('additional_selected')->default([])->dehydrated(true),
@@ -90,7 +90,7 @@ class ReservasiResource extends Resource
             Hidden::make('menu_makan_selected')->default([])->dehydrated(true),
             Hidden::make('menu_makan_jumlah')->default([])->dehydrated(true),
 
-            // -------- FASILITAS --------
+            // ---------- FASILITAS ----------
             Section::make('Fasilitas yang Dipesan')
                 ->description('Pilih Jenis Member & Jenis Hari untuk menampilkan fasilitas.')
                 ->disabled(fn (Get $get) => $get('ubaya_member') === null || $get('hari_tipe') === null)
@@ -142,7 +142,7 @@ class ReservasiResource extends Resource
                 ])
                 ->columns(1),
 
-            // -------- ADDITIONAL --------
+            // ---------- ADDITIONAL ----------
             Section::make('Additional')
                 ->schema([
                     Group::make()
@@ -190,7 +190,7 @@ class ReservasiResource extends Resource
                 ])
                 ->columns(1),
 
-            // -------- MENU MAKAN --------
+            // ---------- MENU MAKAN (PAKET MAKANAN) ----------
             Section::make('Menu Makan')
                 ->schema([
                     Group::make()
@@ -302,46 +302,48 @@ class ReservasiResource extends Resource
         ];
     }
 
-    // ---------- helpers ----------
+    // ---------- Helpers ----------
 
     protected static function hitungTotalHargaFromGet(Get $get, int $diskonPersen = 0): int
     {
-        $fSelected = array_filter($get('fasilitas_selected') ?? []);
-        $fIds     = array_map('intval', array_keys($fSelected));
-        $fJumlah  = $get('fasilitas_jumlah') ?? [];
-
+        // Fasilitas
+        $fSel = array_filter($get('fasilitas_selected') ?? []);
+        $fIds = array_map('intval', array_keys($fSel));
+        $fJml = $get('fasilitas_jumlah') ?? [];
         $totalF = 0;
-        if (!empty($fIds)) {
+        if ($fIds) {
             $items = Fasilitas::whereIn('id', $fIds)->get()->keyBy('id');
             foreach ($fIds as $id) {
                 if (!isset($items[$id])) continue;
-                $qty = max(1, (int) ($fJumlah[$id] ?? 1));
+                $qty = max(1, (int) ($fJml[$id] ?? 1));
                 $totalF += (int) $items[$id]->harga * $qty;
             }
         }
 
-        $aSelected = array_filter($get('additional_selected') ?? []);
-        $aIds     = array_map('intval', array_keys($aSelected));
-        $aJumlah  = $get('additional_jumlah') ?? [];
+        // Additional
+        $aSel = array_filter($get('additional_selected') ?? []);
+        $aIds = array_map('intval', array_keys($aSel));
+        $aJml = $get('additional_jumlah') ?? [];
         $totalA = 0;
-        if (!empty($aIds)) {
+        if ($aIds) {
             $items = Additional::whereIn('id', $aIds)->get()->keyBy('id');
             foreach ($aIds as $id) {
                 if (!isset($items[$id])) continue;
-                $qty = max(1, (int) ($aJumlah[$id] ?? 1));
+                $qty = max(1, (int) ($aJml[$id] ?? 1));
                 $totalA += (int) $items[$id]->harga * $qty;
             }
         }
 
-        $mSelected = array_filter($get('menu_makan_selected') ?? []);
-        $mIds     = array_map('intval', array_keys($mSelected));
-        $mJumlah  = $get('menu_makan_jumlah') ?? [];
+        // Menu Makan
+        $mSel = array_filter($get('menu_makan_selected') ?? []);
+        $mIds = array_map('intval', array_keys($mSel));
+        $mJml = $get('menu_makan_jumlah') ?? [];
         $totalM = 0;
-        if (!empty($mIds)) {
+        if ($mIds) {
             $items = MenuMakan::whereIn('id', $mIds)->get()->keyBy('id');
             foreach ($mIds as $id) {
                 if (!isset($items[$id])) continue;
-                $qty = max(1, (int) ($mJumlah[$id] ?? 1));
+                $qty = max(1, (int) ($mJml[$id] ?? 1));
                 $totalM += (int) $items[$id]->harga * $qty;
             }
         }
@@ -365,7 +367,7 @@ class ReservasiResource extends Resource
         }
         $record->fasilitas()->sync($fSync);
 
-        // Additional (if you store jumlah too; if not, convert to simple array)
+        // Additional (dengan jumlah)
         $aSelected = array_filter($state['additional_selected'] ?? []);
         $aJumlah   = $state['additional_jumlah'] ?? [];
         $aSync = [];
@@ -375,7 +377,7 @@ class ReservasiResource extends Resource
         }
         $record->additional()->sync($aSync);
 
-        // Menu Makan
+        // Menu Makan (Paket Makanan) — selected + jumlah
         $mSelected = array_filter($state['menu_makan_selected'] ?? []);
         $mJumlah   = $state['menu_makan_jumlah'] ?? [];
         $mSync = [];
