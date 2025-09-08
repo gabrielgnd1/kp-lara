@@ -50,7 +50,9 @@ class CreateReservasi extends CreateRecord
 
     protected function afterCreate(): void
     {
-        Notification::make()
+        ReservasiResource::syncPivotsFromFormState($this->record, $this->form->getState());
+
+        \Filament\Notifications\Notification::make()
             ->title('Reservasi berhasil dibuat!')
             ->success()
             ->send();

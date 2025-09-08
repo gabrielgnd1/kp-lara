@@ -5,6 +5,8 @@ namespace App\Filament\Reservasi\Resources;
 use App\Filament\Reservasi\Resources\ReservasiResource\Pages;
 use App\Models\Reservasi;
 use App\Models\Fasilitas;
+use App\Models\Additional;
+use App\Models\MenuMakan;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -37,10 +39,11 @@ class ReservasiResource extends Resource
 
         return $form->schema([
             Radio::make('ubaya_member')
-                ->label('INTERNAL / EKSTERNAL')
-                ->options(['Ya' => 'Ya', 'Tidak' => 'Tidak'])
+                ->label('Jenis Member')
+                ->options(['Internal' => 'Internal', 'Eksternal' => 'Eksternal'])
                 ->required()
                 ->reactive()
+                ->live()
                 ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
             Radio::make('hari_tipe')
@@ -48,6 +51,7 @@ class ReservasiResource extends Resource
                 ->options(['Weekday' => 'Weekday', 'Weekend' => 'Weekend'])
                 ->required()
                 ->reactive()
+                ->live()
                 ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
             Forms\Components\TextInput::make('nama_pemesan')->label('Nama Pemesan')->required()->maxLength(100),
@@ -83,30 +87,47 @@ class ReservasiResource extends Resource
                 ->schema([
                     Group::make()
                         ->schema(function (Get $get) use ($recalc) {
+                            // read from current form state (already set in mutateFormDataBeforeFill)
+                            $selectedMap = (array) ($get('fasilitas_selected') ?? []); // ['id' => true]
+                            $jumlahMap   = (array) ($get('fasilitas_jumlah')   ?? []); // ['id' => jumlah]
+
                             return Fasilitas::query()
                                 ->where('status', 'Available')
                                 ->when($get('ubaya_member'), fn ($query, $val) =>
-                                    $query->where('jenis_user', $val === 'Ya' ? 'Internal' : 'Eksternal'))
+                                    $query->where('jenis_user', $val === 'Internal' ? 'Internal' : 'Eksternal'))
                                 ->when($get('hari_tipe'), fn ($query, $val) =>
                                     $query->where('day', $val))
                                 ->get()
                                 ->unique('nama')
-                                ->map(function ($fasilitas) use ($recalc) {
+                                ->map(function ($fasilitas) use ($recalc, $selectedMap, $jumlahMap) {
+                                    $id = (string) $fasilitas->id;
+
                                     return Grid::make(2)->schema([
-                                        Checkbox::make("fasilitas_selected.{$fasilitas->id}")
+                                        Checkbox::make("fasilitas_selected.$id")
                                             ->label($fasilitas->nama)
                                             ->reactive()
+                                            ->live()
                                             ->dehydrated(false) // keep out of reservasi insert
+                                            // ⬇️ hydrate from existing relations
+                                            // ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $component) use ($id, $selectedMap) {
+                                            //     $component->state((bool) ($selectedMap[$id] ?? false));
+                                            // })
+                                            ->default(fn (Get $get) => (bool) (($get('fasilitas_selected') ?? [])[$id] ?? false))
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
-                                        TextInput::make("fasilitas_jumlah.{$fasilitas->id}")
+                                        TextInput::make("fasilitas_jumlah.$id")
                                             ->label('Jumlah')
                                             ->numeric()
                                             ->default(1)
-                                            ->required(fn ($get) => $get("fasilitas_selected.{$fasilitas->id}") === true)
-                                            ->visible(fn ($get) => $get("fasilitas_selected.{$fasilitas->id}") === true)
+                                            ->required(fn ($get) => $get("fasilitas_selected.$id") === true)
+                                            ->visible(fn ($get) => $get("fasilitas_selected.$id") === true)
                                             ->reactive()
                                             ->dehydrated(false) // keep out of reservasi insert
+                                            // ⬇️ hydrate jumlah from pivot
+                                            // ->afterStateHydrated(function (\Filament\Forms\Components\TextInput $component) use ($id, $jumlahMap) {
+                                            //     $component->state((int) ($jumlahMap[$id] ?? 1));
+                                            // })
+                                            ->default(fn (Get $get) => (bool) (($get('fasilitas_jumlah') ?? [])[$id] ?? false))
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
                                     ]);
                                 })->toArray();
@@ -118,25 +139,35 @@ class ReservasiResource extends Resource
                 ->schema([
                     Group::make()
                         ->schema(function (Get $get) use ($recalc) {
-                            return \App\Models\Additional::query()
+                            $selectedMap = (array) ($get('additional_selected') ?? []);
+                
+                            return Additional::query()
                                 ->where('status', 'Available')
                                 ->get()
-                                ->map(function ($additional) use ($recalc) {
+                                ->map(function ($additional) use ($recalc, $selectedMap) {
+                                    $id = (string) $additional->id;
+
                                     return Grid::make(2)->schema([
-                                        Checkbox::make("additional_selected.{$additional->id}")
+                                        Checkbox::make("additional_selected.$id")
                                             ->label($additional->nama)
                                             ->reactive()
+                                            ->live()
                                             ->dehydrated(false)
+                                            // ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $component) use ($id, $selectedMap) {
+                                            //     $component->state((bool) ($selectedMap[$id] ?? false));
+                                            // })
+                                            ->default(fn (Get $get) => (bool) (($get('additional_selected') ?? [])[$id] ?? false))
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
-                                        TextInput::make("additional_jumlah.{$additional->id}")
+                                        TextInput::make("additional_jumlah.$id")
                                             ->label('Jumlah')
                                             ->numeric()
                                             ->default(1)
-                                            ->required(fn ($get) => $get("additional_selected.{$additional->id}") === true)
-                                            ->visible(fn ($get) => $get("additional_selected.{$additional->id}") === true)
+                                            ->required(fn ($get) => $get("additional_selected.$id") === true)
+                                            ->visible(fn ($get) => $get("additional_selected.$id") === true)
                                             ->reactive()
                                             ->dehydrated(false)
+                                            ->default(fn (Get $get) => (bool) (($get('additional_jumlah') ?? [])[$id] ?? false))
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
                                     ]);
                                 })->toArray();
@@ -148,25 +179,39 @@ class ReservasiResource extends Resource
                 ->schema([
                     Group::make()
                         ->schema(function (Get $get) use ($recalc) {
-                            return \App\Models\MenuMakan::query()
+                            $selectedMap = (array) ($get('menu_makan_selected') ?? []);
+                            $jumlahMap = (array) ($get('menu_makan_jumlah')   ?? []);
+
+                            return MenuMakan::query()
                                 ->where('status', 'Available')
                                 ->get()
-                                ->map(function ($menuMakan) use ($recalc) {
+                                ->map(function ($menuMakan) use ($recalc, $selectedMap, $jumlahMap) {
+                                    $id = (string) $menuMakan->id;
+
                                     return Grid::make(2)->schema([
-                                        Checkbox::make("menu_makan_selected.{$menuMakan->id}")
+                                        Checkbox::make("menu_makan_selected.$id")
                                             ->label($menuMakan->nama)
                                             ->reactive()
+                                            ->live()
                                             ->dehydrated(false)
+                                            // ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $component) use ($id, $selectedMap) {
+                                            //     $component->state((bool) ($selectedMap[$id] ?? false));
+                                            // })
+                                            ->default(fn (Get $get) => (bool) (($get('menu_makan_selected') ?? [])[$id] ?? false))
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
 
-                                        TextInput::make("menu_makan_jumlah.{$menuMakan->id}")
+                                        TextInput::make("menu_makan_jumlah.$id")
                                             ->label('Jumlah')
                                             ->numeric()
                                             ->default(1)
-                                            ->required(fn ($get) => $get("menu_makan_selected.{$menuMakan->id}") === true)
-                                            ->visible(fn ($get) => $get("menu_makan_selected.{$menuMakan->id}") === true)
+                                            ->required(fn ($get) => $get("menu_makan_selected.$id") === true)
+                                            ->visible(fn ($get) => $get("menu_makan_selected.$id") === true)
                                             ->reactive()
                                             ->dehydrated(false)
+                                            // ->afterStateHydrated(function (\Filament\Forms\Components\TextInput $component) use ($id, $jumlahMap) {
+                                            //     $component->state((int) ($jumlahMap[$id] ?? 1));
+                                            // })
+                                            ->default(fn (Get $get) => (bool) (($get('menu_makan_jumlah') ?? [])[$id] ?? false))
                                             ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($set, $get)),
                                     ]);
                                 })->toArray();
@@ -287,5 +332,32 @@ class ReservasiResource extends Resource
         $total -= (int) round($total * ($diskon / 100));
 
         return max(0, (int) $total);
+    }
+
+    public static function syncPivotsFromFormState(\App\Models\Reservasi $record, array $state): void
+    {
+        // Fasilitas: selected + jumlah
+        $fSelected = array_filter($state['fasilitas_selected'] ?? []);
+        $fJumlah   = $state['fasilitas_jumlah'] ?? [];
+        $fSync = [];
+        foreach (array_keys($fSelected) as $fid) {
+            $fid = (int) $fid;
+            $fSync[$fid] = ['jumlah' => (int) ($fJumlah[$fid] ?? 1)];
+        }
+        $record->fasilitas()->sync($fSync);
+
+        // Additional: selected only
+        $aSelected = array_filter($state['additional_selected'] ?? []);
+        $record->additional()->sync(array_map('intval', array_keys($aSelected)));
+
+        // Menu makan: selected + jumlah
+        $mSelected = array_filter($state['menu_makan_selected'] ?? []);
+        $mJumlah   = $state['menu_makan_jumlah'] ?? [];
+        $mSync = [];
+        foreach (array_keys($mSelected) as $mid) {
+            $mid = (int) $mid;
+            $mSync[$mid] = ['jumlah' => (int) ($mJumlah[$mid] ?? 1)];
+        }
+        $record->menuMakan()->sync($mSync);
     }
 }
