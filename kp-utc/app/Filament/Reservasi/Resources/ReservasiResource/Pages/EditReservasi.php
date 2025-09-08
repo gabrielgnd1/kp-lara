@@ -21,13 +21,20 @@ class EditReservasi extends EditRecord
     {
         $record = $this->record->load(['fasilitas', 'additional', 'menuMakan']);
 
+        // Derive hari_tipe from check-in if not set
         if (empty($data['hari_tipe']) && !empty($record->waktu_check_in)) {
-            $dow = $record->waktu_check_in->dayOfWeekIso;
+            // ensure casts: waktu_check_in should be datetime in the model
+            $dow = $record->waktu_check_in->dayOfWeekIso; // 1..7
             $data['hari_tipe'] = in_array($dow, [6, 7], true) ? 'Weekend' : 'Weekday';
         }
-        $data['ubaya_member'] = $data['ubaya_member'] ?? 'Internal';
 
-         // ---------- FASILITAS ----------
+        // If ubaya_member isn't a persisted column, infer from first fasilitas (fallback to Internal)
+        if (empty($data['ubaya_member'])) {
+            $first = $record->fasilitas->first();
+            $data['ubaya_member'] = $first?->jenis_user ?? 'Internal';
+        }
+
+        // ---------- FASILITAS ----------
         $data['fasilitas_selected'] = [];
         $data['fasilitas_jumlah']   = [];
         foreach ($record->fasilitas as $f) {
@@ -42,7 +49,6 @@ class EditReservasi extends EditRecord
         foreach ($record->additional as $a) {
             $id = (string) $a->id;
             $data['additional_selected'][$id] = true;
-            // only if you actually use jumlah for additional:
             $data['additional_jumlah'][$id]   = (int) ($a->pivot->jumlah ?? 1);
         }
 
@@ -61,5 +67,10 @@ class EditReservasi extends EditRecord
     protected function afterSave(): void
     {
         ReservasiResource::syncPivotsFromFormState($this->record, $this->form->getState());
+
+        \Filament\Notifications\Notification::make()
+            ->title('Reservasi diperbarui!')
+            ->success()
+            ->send();
     }
 }
