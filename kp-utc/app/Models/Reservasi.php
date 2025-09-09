@@ -17,7 +17,8 @@ class Reservasi extends Model
         'nama_pemesan','no_telepon','email','judul_kegiatan',
         'waktu_check_in','waktu_check_out',
         'jumlah_laki','jumlah_perempuan','informasi_tambahan',
-        'status_pembayaran','tanggal_dibuat', // OK
+        'diskon', 'harga_akhir',
+        'status_pembayaran','tanggal_dibuat',
         // intentionally exclude: status_reservasi, id_pic_ioc, id_pic_utc
     ];
 
@@ -29,6 +30,8 @@ class Reservasi extends Model
         'tanggal_dibuat'  => 'datetime',
         'jumlah_laki' => 'integer',
         'jumlah_perempuan' => 'integer',
+        'diskon'         => 'decimal:2',
+        'harga_akhir'    => 'decimal:2',
     ];
 
     protected static function booted()
@@ -59,6 +62,14 @@ class Reservasi extends Model
 
             // explicit timestamp (Jakarta)
             $model->tanggal_dibuat = $model->tanggal_dibuat ?? Carbon::now('Asia/Jakarta');
+        });
+
+        static::deleting(function (Reservasi $reservasi) {
+            // Kalau soft delete & ingin pivot langsung hilang, biarkan di 'deleting'.
+            // Jika ingin pivot baru hilang saat forceDelete, pindah ke static::forceDeleted(...)
+            $reservasi->fasilitas()->detach();
+            $reservasi->additional()->detach();
+            $reservasi->menuMakan()->detach();
         });
     }
 
