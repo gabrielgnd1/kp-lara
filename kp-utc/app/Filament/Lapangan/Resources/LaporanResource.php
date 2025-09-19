@@ -120,7 +120,7 @@ class LaporanResource extends Resource
         ->paginated()
         ->striped(false)
         ->actions([]) // hide edit/delete tombol default
-        ->bulkActions([]);
+        ->bulkActions([]);//
 }
 
     public static function getRelations(): array
@@ -139,7 +139,7 @@ class LaporanResource extends Resource
             'index' => Pages\ListLaporans::route('/'),
             'create' => Pages\CreateLaporan::route('/create'),
             'edit' => Pages\EditLaporan::route('/{record}/edit'),
-            //'tambah' => Pages\TambahLaporan::routes('/tambah'), // ✅ ini custom page
+            
         ];
     }
 }
