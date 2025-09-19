@@ -14,7 +14,13 @@ class PemesananAdditional extends Model
     protected $fillable = [
         'reservasi_id',
         'additional_id',
-        'jumlah'
+         'mulai',
+        'selesai'
+    ];
+
+    protected $casts = [
+        'mulai'   => 'datetime',
+        'selesai' => 'datetime',
     ];
 
     //deklarasi bahwa additional_id di table ini adalah milik table Additional

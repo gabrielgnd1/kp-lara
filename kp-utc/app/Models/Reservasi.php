@@ -115,12 +115,13 @@ class Reservasi extends Model
             'pemesanan_fasilitas',
             'reservasi_id',
             'fasilitas_id'
-        )->withPivot('jumlah');
+        )->withPivot(['mulai','selesai']);
     }
 
     public function additional()
     {
-        return $this->belongsToMany(Additional::class, 'pemesanan_additional', 'reservasi_id', 'additional_id');
+        return $this->belongsToMany(Additional::class, 'pemesanan_additional', 'reservasi_id', 'additional_id')
+        ->withPivot(['mulai','selesai']);
     }
 
     public function menuMakan()

@@ -33,25 +33,29 @@ class EditReservasi extends EditRecord
 
         $data['diskon'] = $data['diskon'] ?? (int) ($this->record->diskon ?? 0);
 
-        // fasilitas
+        // ------- FASILITAS (pakai groupKey = strtolower(nama)) -------
         $data['fasilitas_selected'] = [];
-        $data['fasilitas_jumlah']   = [];
+        $data['fasilitas_mulai']    = [];
+        $data['fasilitas_selesai']  = [];
         foreach ($record->fasilitas as $f) {
-            $id = (string) $f->id;
-            $data['fasilitas_selected'][$id] = true;
-            $data['fasilitas_jumlah'][$id]   = (int) ($f->pivot->jumlah ?? 1);
+            $groupKey = trim(mb_strtolower($f->nama));
+            $data['fasilitas_selected'][$groupKey] = true;
+            $data['fasilitas_mulai'][$groupKey]    = $f->pivot->mulai ?? $data['waktu_check_in'] ?? null;
+            $data['fasilitas_selesai'][$groupKey]  = $f->pivot->selesai ?? $data['waktu_check_out'] ?? null;
         }
 
-        // additional
+        // ------- ADDITIONAL (key = id) -------
         $data['additional_selected'] = [];
-        $data['additional_jumlah']   = [];
+        $data['additional_mulai']    = [];
+        $data['additional_selesai']  = [];
         foreach ($record->additional as $a) {
             $id = (string) $a->id;
             $data['additional_selected'][$id] = true;
-            $data['additional_jumlah'][$id]   = (int) ($a->pivot->jumlah ?? 1);
+            $data['additional_mulai'][$id]    = $a->pivot->mulai ?? $data['waktu_check_in'] ?? null;
+            $data['additional_selesai'][$id]  = $a->pivot->selesai ?? $data['waktu_check_out'] ?? null;
         }
 
-        // menu makan
+        // ------- MENU MAKAN -------
         $data['menu_makan_selected'] = [];
         $data['menu_makan_jumlah']   = [];
         foreach ($record->menuMakan as $m) {
@@ -60,49 +64,52 @@ class EditReservasi extends EditRecord
             $data['menu_makan_jumlah'][$id]   = (int) ($m->pivot->jumlah ?? 1);
         }
 
-        // optional: set filter so the list appears during edit
-        $first = $record->fasilitas->first();
-        if ($first) {
+        // Optional: isi default radio & hari_tipe agar section fasilitas tampil
+        if ($record->fasilitas->first()) {
+            $first = $record->fasilitas->first();
             $data['ubaya_member'] = $data['ubaya_member'] ?? $first->jenis_user;
             $data['hari_tipe']    = $data['hari_tipe']    ?? $first->day;
         }
 
         $data['harga_akhir'] = $data['harga_akhir'] ?? (int) ($this->record->harga_akhir ?? 0);
-
         return $data;
-
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $state = $this->form->getState();
 
-        $fSel = (array) ($state['fasilitas_selected'] ?? []);
-        $fJml = (array) ($state['fasilitas_jumlah'] ?? []);
-        $aSel = (array) ($state['additional_selected'] ?? []);
-        $aJml = (array) ($state['additional_jumlah'] ?? []);
+        $fSel = (array) ($state['fasilitas_selected']  ?? []);
+        $fMul = (array) ($state['fasilitas_mulai']     ?? []);
+        $fSelis = (array) ($state['fasilitas_selesai'] ?? []);
+
+        $aSel = (array) ($state['additional_selected']  ?? []);
+        $aMul = (array) ($state['additional_mulai']     ?? []);
+        $aSelis = (array) ($state['additional_selesai'] ?? []);
+
         $mSel = (array) ($state['menu_makan_selected'] ?? []);
-        $mJml = (array) ($state['menu_makan_jumlah'] ?? []);
-        $disk = (int) ($data['diskon'] ?? 0);
-        $jenis = $data['ubaya_member'] ?? ($state['ubaya_member'] ?? 'Internal');
+        $mJml = (array) ($state['menu_makan_jumlah']   ?? []);
 
-        $split = \App\Filament\Reservasi\Resources\ReservasiResource::hitungHariSplit(
-            $data['waktu_check_in'] ?? $state['waktu_check_in'] ?? null,
-            $data['waktu_check_out'] ?? $state['waktu_check_out'] ?? null,
-        );
+        $disk  = (int)   ($data['diskon'] ?? 0);
+        $jenis = (string)($data['ubaya_member'] ?? $state['ubaya_member'] ?? 'Internal');
+        $cin   = $data['waktu_check_in']  ?? $state['waktu_check_in']  ?? null;
+        $cout  = $data['waktu_check_out'] ?? $state['waktu_check_out'] ?? null;
 
-        $data['harga_akhir'] = ReservasiResource::hitungTotalHarga(
-            $fSel, $fJml, $aSel, $aJml, $mSel, $mJml,
+        $data['harga_akhir'] = \App\Filament\Reservasi\Resources\ReservasiResource::hitungTotalHarga(
+            $fSel, $fMul, $fSelis,
+            $aSel, $aMul, $aSelis,
+            $mSel, $mJml,
             $disk,
-            (int) $split['weekday'], (int) $split['weekend'],
-            $jenis
+            $jenis,
+            $cin, $cout
         );
 
-        // buang mirror
+        // Buang mirror fields agar tidak disimpan ke kolom non-eksis
         unset(
-            $data['fasilitas_selected'], $data['fasilitas_jumlah'],
-            $data['additional_selected'], $data['additional_jumlah'],
-            $data['menu_makan_selected'], $data['menu_makan_jumlah']
+            $data['fasilitas_selected'], $data['fasilitas_mulai'], $data['fasilitas_selesai'],
+            $data['additional_selected'], $data['additional_mulai'], $data['additional_selesai'],
+            $data['menu_makan_selected'], $data['menu_makan_jumlah'],
+            $data['hari_tipe']
         );
 
         return $data;

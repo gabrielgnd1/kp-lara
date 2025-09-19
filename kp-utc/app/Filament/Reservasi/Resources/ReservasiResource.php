@@ -36,24 +36,20 @@ class ReservasiResource extends Resource
     public static function form(Form $form): Form
     {
         $recalc = function (Get $get, callable $set) {
-            $fSel = (array) ($get('fasilitas_selected') ?? []);
-            $fJml = (array) ($get('fasilitas_jumlah') ?? []);
-            $aSel = (array) ($get('additional_selected') ?? []);
-            $aJml = (array) ($get('additional_jumlah') ?? []);
-            $mSel = (array) ($get('menu_makan_selected') ?? []);
-            $mJml = (array) ($get('menu_makan_jumlah') ?? []);
-            $disk = (int) ($get('diskon') ?? 0);
-
-            $split = static::hitungHariSplit($get('waktu_check_in'), $get('waktu_check_out'));
-            $jenis = $get('ubaya_member') ?? 'Internal';
-
             $total = static::hitungTotalHarga(
-                $fSel, $fJml, $aSel, $aJml, $mSel, $mJml,
-                $disk,
-                (int) $split['weekday'], (int) $split['weekend'],
-                $jenis
+                (array) ($get('fasilitas_selected')   ?? []),
+                (array) ($get('fasilitas_mulai')      ?? []),
+                (array) ($get('fasilitas_selesai')    ?? []),
+                (array) ($get('additional_selected')  ?? []),
+                (array) ($get('additional_mulai')     ?? []),
+                (array) ($get('additional_selesai')   ?? []),
+                (array) ($get('menu_makan_selected')  ?? []),
+                (array) ($get('menu_makan_jumlah')    ?? []),
+                (int)   ($get('diskon')               ?? 0),
+                ($get('ubaya_member') ?? 'Internal'),
+                $get('waktu_check_in'),
+                $get('waktu_check_out')
             );
-
             $set('harga_akhir', (int) max(0, $total));
         };
 
@@ -64,28 +60,30 @@ class ReservasiResource extends Resource
                 ->dehydrated(false),
 
             Hidden::make('fasilitas_selected')->default([])->dehydrated(false),
-            Hidden::make('fasilitas_jumlah')->default([])->dehydrated(false),
+            Hidden::make('fasilitas_mulai')->default([])->dehydrated(false),
+            Hidden::make('fasilitas_selesai')->default([])->dehydrated(false),
             Hidden::make('additional_selected')->default([])->dehydrated(false),
-            Hidden::make('additional_jumlah')->default([])->dehydrated(false),
+            Hidden::make('additional_mulai')->default([])->dehydrated(false),
+            Hidden::make('additional_selesai')->default([])->dehydrated(false),
             Hidden::make('menu_makan_selected')->default([])->dehydrated(false),
             Hidden::make('menu_makan_jumlah')->default([])->dehydrated(false),
-            Hidden::make('hari_tipe')
-                ->dehydrated(false),
+            Hidden::make('hari_tipe')->dehydrated(false),
 
             // ===== Row: Jenis Member (1 baris penuh) =====
             Section::make('')
                 ->schema([
                     Radio::make('ubaya_member')
                         ->label('Jenis Member')
-                        ->options(['Internal' => 'Internal', 'Eksternal' => 'Eksternal'])
+                        ->options(['Internal' => 'Internal', 'Eksternal' => 'Eksternal'])   
                         ->required()
+                        ->dehydrated(false)
                         ->reactive()
                         ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc) {
                             $set('fasilitas_selected', []);
-                            $set('fasilitas_jumlah', []);
                             // kalau perlu hitung ulang:
                             if (isset($recalc)) $recalc($get, $set);
-                        }),
+                        })
+                        ->live()
                 ])
                 ->columns(1),
 
@@ -117,11 +115,7 @@ class ReservasiResource extends Resource
                 ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc) {
                     $hari = static::deriveHariTipe($get('waktu_check_in'), $get('waktu_check_out'));
                     $set('hari_tipe', $hari);
-
-                    // reset pilihan fasilitas, karena filter berubah
                     $set('fasilitas_selected', []);
-                    $set('fasilitas_jumlah', []);
-
                     $recalc($get, $set);
                 }),
 
@@ -133,11 +127,7 @@ class ReservasiResource extends Resource
                 ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc) {
                     $hari = static::deriveHariTipe($get('waktu_check_in'), $get('waktu_check_out'));
                     $set('hari_tipe', $hari);
-
-                    // reset pilihan fasilitas, karena filter berubah
                     $set('fasilitas_selected', []);
-                    $set('fasilitas_jumlah', []);
-
                     $recalc($get, $set);
                 }),
 
@@ -156,43 +146,66 @@ class ReservasiResource extends Resource
             // ---------- FASILITAS ----------
             Section::make('Fasilitas')
                 ->description('Harga otomatis menyesuaikan Weekday/Weekend di rentang tanggal.')
-                ->disabled(fn (Get $get) => $get('ubaya_member') === null)
+                ->disabled(false)
+                ->live()
                 ->schema([
                     Group::make()
+                        ->live()
                         ->schema(function (Get $get) use ($recalc) {
                             $jenis = $get('ubaya_member') ?? 'Internal';
                             $groups = static::fasilitasGroupedByNamaForMember($jenis);
 
                             // gunakan state yang ada
                             $selectedMap = (array) ($get('fasilitas_selected') ?? []);
-                            $jumlahMap   = (array) ($get('fasilitas_jumlah') ?? []);
 
-                            return collect($groups)->map(function ($g, $groupKey) use ($recalc, $selectedMap, $jumlahMap) {
+                            return collect($groups)->map(function ($g, $groupKey) use ($recalc, $selectedMap) {
                                 $label = $g['nama'];
-                                return Grid::make(2)->schema([
+                                return Grid::make(3)->schema([
                                     Checkbox::make("fasilitas_selected.$groupKey")
                                         ->label($label)
                                         ->reactive()
-                                        ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc, $groupKey) {
-                                            if ($state === true && (int) ($get("fasilitas_jumlah.$groupKey") ?? 0) < 1) {
-                                                $set("fasilitas_jumlah.$groupKey", 1);
-                                            }
-                                            $recalc($get, $set);
-                                        })
                                         ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $c) use ($groupKey, $selectedMap) {
                                             $c->state((bool) ($selectedMap[$groupKey] ?? false));
+                                        })
+                                        ->afterStateUpdated(function ($state, Set $set, Get $get) use ($recalc, $groupKey) {
+                                            if ($state === true) {
+                                                $set("fasilitas_mulai.$groupKey",  $get('waktu_check_in'));
+                                                $set("fasilitas_selesai.$groupKey",$get('waktu_check_out'));
+                                            }
+                                            $recalc($get, $set);
                                         }),
 
-                                    TextInput::make("fasilitas_jumlah.$groupKey")
-                                        ->label('Jumlah')
-                                        ->numeric()->minValue(1)->default(1)
-                                        ->required(fn ($get) => $get("fasilitas_selected.$groupKey") === true)
-                                        ->visible(fn ($get) => $get("fasilitas_selected.$groupKey") === true)
+                                    DateTimePicker::make("fasilitas_mulai.$groupKey")
+                                        ->label('Mulai')
+                                        ->minDate(fn (Get $get) => $get('waktu_check_in'))
+                                        ->maxDate(fn (Get $get) => $get('waktu_check_out'))
+                                        ->required(fn (Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                                        ->visible(fn (Get $get) => $get("fasilitas_selected.$groupKey") === true)
                                         ->reactive()
-                                        ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($get, $set))
-                                        ->afterStateHydrated(function (\Filament\Forms\Components\TextInput $c) use ($groupKey, $jumlahMap) {
-                                            $c->state((int) ($jumlahMap[$groupKey] ?? 1));
-                                        }),
+                                        ->rule(function (Get $get) {
+                                            return function (string $attribute, $value, $fail) use ($get) {
+                                                $checkIn = $get('waktu_check_in');
+                                                if ($checkIn && $value < $checkIn) $fail('Tanggal mulai tidak boleh sebelum check-in.');
+                                            };
+                                        })
+                                        ->afterStateUpdated(fn ($state, Set $set, Get $get) => $recalc($get, $set)),
+
+                                    DateTimePicker::make("fasilitas_selesai.$groupKey")
+                                        ->label('Selesai')
+                                        ->minDate(fn (Get $get) => $get('waktu_check_in'))
+                                        ->maxDate(fn (Get $get) => $get('waktu_check_out'))
+                                        ->required(fn (Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                                        ->visible(fn (Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                                        ->reactive()
+                                        ->rule(function (Get $get) use ($groupKey) {
+                                            return function (string $attribute, $value, $fail) use ($get, $groupKey) {
+                                                $checkOut = $get('waktu_check_out');
+                                                $mulai    = $get("fasilitas_mulai.$groupKey");
+                                                if ($checkOut && $value > $checkOut) $fail('Tanggal selesai tidak boleh setelah check-out.');
+                                                if ($mulai && $value <= $mulai)      $fail('Tanggal selesai harus setelah tanggal mulai.');
+                                            };
+                                        })
+                                        ->afterStateUpdated(fn ($state, Set $set, Get $get) => $recalc($get, $set)),
                                 ]);
                             })->values()->all();
                         }),
@@ -206,39 +219,58 @@ class ReservasiResource extends Resource
                         ->schema(function (Get $get) use ($recalc) {
                             // state existing (agar bisa di-hydrate)
                             $selectedMap = (array) ($get('additional_selected') ?? []);
-                            $jumlahMap   = (array) ($get('additional_jumlah') ?? []);
 
                             return \App\Models\Additional::query()
                                 ->where('status', 'Available')
                                 ->get()
-                                ->map(function ($a) use ($recalc, $selectedMap, $jumlahMap) {
+                                ->map(function ($a) use ($recalc, $selectedMap) {
                                     $id = (string) $a->id;
 
-                                    return Grid::make(2)->schema([
+                                    return Grid::make(3)->schema([
                                         Checkbox::make("additional_selected.$id")
                                             ->label($a->nama)
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc, $id) {
-                                                if ($state === true && (int) ($get("additional_jumlah.$id") ?? 0) < 1) {
-                                                    $set("additional_jumlah.$id", 1);
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) use ($recalc, $id) {
+                                                if ($state === true) {
+                                                    $set("additional_mulai.$id",  $get('waktu_check_in'));
+                                                    $set("additional_selesai.$id",$get('waktu_check_out'));
                                                 }
                                                 $recalc($get, $set);
-                                            })
-                                            ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $c) use ($id, $selectedMap) {
-                                                $c->state((bool) ($selectedMap[$id] ?? false));
                                             }),
 
-                                        TextInput::make("additional_jumlah.$id")
-                                            ->label('Jumlah')
-                                            ->numeric()->minValue(1)->default(1)
-                                            ->required(fn ($get) => $get("additional_selected.$id") === true)
-                                            ->visible(fn ($get) => $get("additional_selected.$id") === true)
+                                        DateTimePicker::make("additional_mulai.$id")
+                                            ->label('Mulai')
+                                            ->minDate(fn (Get $get) => $get('waktu_check_in'))
+                                            ->maxDate(fn (Get $get) => $get('waktu_check_out'))
+                                            ->required(fn (Get $get) => $get("additional_selected.$id") === true)
+                                            ->visible(fn (Get $get) => $get("additional_selected.$id") === true)
                                             ->reactive()
-                                            ->afterStateUpdated(fn ($state, callable $set, Get $get) => $recalc($get, $set))
-                                            ->afterStateHydrated(function (\Filament\Forms\Components\TextInput $c) use ($id, $jumlahMap) {
-                                                $c->state((int) ($jumlahMap[$id] ?? 1));
-                                            }),
+                                            ->rule(function (Get $get) {
+                                                return function (string $attribute, $value, $fail) use ($get) {
+                                                    $checkIn = $get('waktu_check_in');
+                                                    if ($checkIn && $value < $checkIn) $fail('Tanggal mulai tidak boleh sebelum check-in.');
+                                                };
+                                            })
+                                            ->afterStateUpdated(fn ($state, Set $set, Get $get) => $recalc($get, $set)),
+
+                                        DateTimePicker::make("additional_selesai.$id")
+                                            ->label('Selesai')
+                                            ->minDate(fn (Get $get) => $get('waktu_check_in'))
+                                            ->maxDate(fn (Get $get) => $get('waktu_check_out'))
+                                            ->required(fn (Get $get) => $get("additional_selected.$id") === true)
+                                            ->visible(fn (Get $get) => $get("additional_selected.$id") === true)
+                                            ->reactive()
+                                            ->rule(function (Get $get) use ($id) {
+                                                return function (string $attribute, $value, $fail) use ($get, $id) {
+                                                    $checkOut = $get('waktu_check_out');
+                                                    $mulai    = $get("additional_mulai.$id");
+                                                    if ($checkOut && $value > $checkOut) $fail('Tanggal selesai tidak boleh setelah check-out.');
+                                                    if ($mulai && $value <= $mulai) $fail('Tanggal selesai harus setelah tanggal mulai.');
+                                                };
+                                            })
+                                            ->afterStateUpdated(fn ($state, Set $set, Get $get) => $recalc($get, $set)),
                                     ]);
+
                                 })
                                 ->values()
                                 ->all();
@@ -336,7 +368,7 @@ class ReservasiResource extends Resource
                 Tables\Actions\DeleteAction::make(), 
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(), // 👈 bulk delete juga bisa
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
@@ -358,29 +390,47 @@ class ReservasiResource extends Resource
         ];
     }
 
-    public static function syncPivotsFromFormState(\App\Models\Reservasi $record, array $state): void
+    public static function syncPivotsFromFormState(Reservasi $record, array $state): void
     {
-        // Fasilitas
+        // -------- FASILITAS --------
         $fSelected = array_filter($state['fasilitas_selected'] ?? []);
-        $fJumlah   = $state['fasilitas_jumlah'] ?? [];
+        $fMulai    = $state['fasilitas_mulai']   ?? [];
+        $fSelesai  = $state['fasilitas_selesai'] ?? [];
         $fSync = [];
-        foreach (array_keys($fSelected) as $fid) {
-            $qty = max(1, (int) ($fJumlah[$fid] ?? 1));
-            $fSync[(int) $fid] = ['jumlah' => $qty];
+
+        // ambil mapping fasilitas per-member
+        $jenis  = $state['ubaya_member'] ?? 'Internal';
+        $groups = static::fasilitasGroupedByNamaForMember($jenis);
+
+        foreach (array_keys($fSelected) as $groupKey) {
+            if (!isset($groups[$groupKey])) continue;
+
+            // pilih id "utama" (misalnya id weekday kalau ada, atau ambil id pertama)
+            $fid = $groups[$groupKey]['id_canonical'] ?? null;
+            if (!$fid) continue;
+
+            $fSync[$fid] = [
+                'mulai'   => $fMulai[$groupKey]   ?? null,
+                'selesai' => $fSelesai[$groupKey] ?? null,
+            ];
         }
         $record->fasilitas()->sync($fSync);
 
-        // Additional (dengan jumlah)
+        // -------- ADDITIONAL --------
         $aSelected = array_filter($state['additional_selected'] ?? []);
-        $aJumlah   = $state['additional_jumlah'] ?? [];
+        $aMulai    = $state['additional_mulai']   ?? [];
+        $aSelesai  = $state['additional_selesai'] ?? [];
         $aSync = [];
-        foreach (array_keys($aSelected) as $aid) {
-            $qty = max(1, (int) ($aJumlah[$aid] ?? 1));
-            $aSync[(int) $aid] = ['jumlah' => $qty];
+        foreach (array_keys($aSelected) as $id) {
+            $aid = (int) $id;
+            $aSync[$aid] = [
+                'mulai'   => $aMulai[$id]   ?? null,
+                'selesai' => $aSelesai[$id] ?? null,
+            ];
         }
         $record->additional()->sync($aSync);
 
-        // Menu Makan (Paket Makanan) — selected + jumlah
+        // -------- MENU MAKAN --------
         $mSelected = array_filter($state['menu_makan_selected'] ?? []);
         $mJumlah   = $state['menu_makan_jumlah'] ?? [];
         $mSync = [];
@@ -423,6 +473,22 @@ class ReservasiResource extends Resource
         }
     }
 
+    protected static function hitungSplitPerRange(?string $mulai, ?string $selesai): array
+    {
+        $wd = 0; $we = 0;
+        if (!$mulai || !$selesai) return ['weekday'=>0,'weekend'=>0];
+        $start = Carbon::parse($mulai)->startOfDay();
+        $end   = Carbon::parse($selesai)->startOfDay();
+        if ($end->lessThanOrEqualTo($start)) {
+            ($start->isWeekend()) ? $we++ : $wd++;
+            return ['weekday'=>$wd,'weekend'=>$we];
+        }
+        foreach (CarbonPeriod::create($start, $end->copy()->subDay()) as $d) {
+            $d->isWeekend() ? $we++ : $wd++;
+        }
+        return ['weekday'=>$wd,'weekend'=>$we];
+    }
+
     protected static function hitungHariSplit(?string $checkIn, ?string $checkOut): array
     {
         $weekday = 0; $weekend = 0;
@@ -455,20 +521,6 @@ class ReservasiResource extends Resource
         return compact('weekday', 'weekend');
     }
 
-    /**
-     * Kembalikan map fasilitas “tergabung”:
-     * [
-     *   <groupKey> => [
-     *      'id_list' => [id_weekday, id_weekend], // id-id yang merepresentasikan fasilitas ini
-     *      'nama' => 'Aula Besar',
-     *      'harga_weekday' => 1000000,
-     *      'harga_weekend' => 1200000,
-     *   ],
-     *   ...
-     * ]
-     *
-     * GroupKey pakai nama (atau kode unik kalau ada kolom 'kode').
-     */
     protected static function fasilitasGroupedByNamaForMember(string $jenisUser): array
     {
         $rows = Fasilitas::query()
@@ -477,86 +529,103 @@ class ReservasiResource extends Resource
             ->get();
 
         $groups = [];
+
         foreach ($rows as $r) {
-            $key = trim(mb_strtolower($r->nama)); // ganti ke $r->kode kalau ada
+            $key = trim(mb_strtolower($r->nama)); // atau pakai $r->kode jika ada kolom kode unik
+
             if (!isset($groups[$key])) {
                 $groups[$key] = [
-                    'id_list' => [],
-                    'nama' => $r->nama,
-                    'harga_weekday' => null,
-                    'harga_weekend' => null,
+                    'nama'           => $r->nama,
+                    'id_list'        => [],      // semua id (opsional, buat referensi)
+                    'id_weekday'     => null,    // id baris fasilitas untuk Weekday
+                    'id_weekend'     => null,    // id baris fasilitas untuk Weekend
+                    'id_canonical'   => null,    // fallback id (gunakan yg tersedia)
+                    'harga_weekday'  => null,
+                    'harga_weekend'  => null,
                 ];
             }
+
             $groups[$key]['id_list'][] = (int) $r->id;
 
-            if (strcasecmp($r->day, 'Weekday') === 0) {
+            $day = strtolower((string) $r->day);
+            if ($day === 'weekday') {
+                $groups[$key]['id_weekday']    = (int) $r->id;
                 $groups[$key]['harga_weekday'] = (int) $r->harga;
-            } elseif (strcasecmp($r->day, 'Weekend') === 0) {
+            } elseif ($day === 'weekend') {
+                $groups[$key]['id_weekend']    = (int) $r->id;
                 $groups[$key]['harga_weekend'] = (int) $r->harga;
+            } else {
+                // kalau ada data 'day' lain, kamu bisa abaikan atau handle di sini
+            }
+
+            // set id_canonical sekali saja: pilih weekday kalau ada, kalau belum ada pakai weekend
+            if ($groups[$key]['id_canonical'] === null) {
+                $groups[$key]['id_canonical'] = $groups[$key]['id_weekday'] ?? $groups[$key]['id_weekend'] ?? (int) $r->id;
             }
         }
+
+        // rapikan: unikkan id_list
+        foreach ($groups as &$g) {
+            $g['id_list'] = array_values(array_unique($g['id_list']));
+        }
+
         return $groups;
     }
 
     protected static function hitungTotalHarga(
-        array $fasilitasSelected,
-        array $fasilitasJumlah,
-        array $additionalSelected,
-        array $additionalJumlah,
+        array $fSelected,
+        array $fMulai,
+        array $fSelesai,
+        array $aSelected,
+        array $aMulai,
+        array $aSelesai,
         array $menuSelected,
         array $menuJumlah,
         int $diskonPersen,
-        int $weekdayCount,
-        int $weekendCount,
-        ?string $jenisUser = null // 'Internal' / 'Eksternal' untuk pricing fasilitas
+        ?string $jenisUser = null,
+        ?string $checkIn = null,
+        ?string $checkOut = null
     ): int {
-        // ------- FASILITAS (per-hari, beda harga weekday/weekend) -------
-        $totalF = 0;
+        $subtotal = 0;
+
+        // FASILITAS ...
         if ($jenisUser) {
             $groups = static::fasilitasGroupedByNamaForMember($jenisUser);
-            foreach ($fasilitasSelected as $key => $on) {
+            foreach ($fSelected as $key => $on) {
                 if (!$on) continue;
-                $qty = max(1, (int) ($fasilitasJumlah[$key] ?? 1));
-                $g   = $groups[$key] ?? null;
+                $g = $groups[$key] ?? null;
                 if (!$g) continue;
 
-                $hWd = (int) ($g['harga_weekday'] ?? 0);
-                $hWe = (int) ($g['harga_weekend'] ?? 0);
-
-                $totalF += $qty * ($weekdayCount * $hWd + $weekendCount * $hWe);
+                $split = static::hitungSplitPerRange($fMulai[$key] ?? null, $fSelesai[$key] ?? null);
+                $subtotal += ($split['weekday'] * (int)($g['harga_weekday'] ?? 0))
+                        + ($split['weekend'] * (int)($g['harga_weekend'] ?? 0));
             }
         }
 
-        // ------- ADDITIONAL (anggap per-hari; kalau tidak, ganti $hariTotal=1) -------
-        $hariTotal = max(1, $weekdayCount + $weekendCount);
-        $aIds = array_map('intval', array_keys(array_filter($additionalSelected)));
-        $totalA = 0;
-        if ($aIds) {
-            $items = Additional::whereIn('id', $aIds)->get()->keyBy('id');
-            foreach ($aIds as $id) {
-                if (!isset($items[$id])) continue;
-                $qty = max(1, (int) ($additionalJumlah[$id] ?? 1));
-                $totalA += (int) $items[$id]->harga * $qty * $hariTotal; // ← kalau bukan per-hari: hilangkan * $hariTotal
+        // ADDITIONAL (per-hari; kalau “sekali pakai” ganti $hari -> min(1, $hari))
+        foreach ($aSelected as $id => $on) {
+            if (!$on) continue;
+            $split = static::hitungSplitPerRange($aMulai[$id] ?? null, $aSelesai[$id] ?? null);
+            $hari  = max(0, $split['weekday'] + $split['weekend']);
+            if ($item = Additional::find((int)$id)) {
+                $subtotal += (int)$item->harga * max(1, $hari);
             }
         }
 
-        // ------- MENU MAKAN (anggap per-hari; kalau tidak, ganti jadi sekali) -------
-        $mIds = array_map('intval', array_keys(array_filter($menuSelected)));
-        $totalM = 0;
-        if ($mIds) {
-            $items = MenuMakan::whereIn('id', $mIds)->get()->keyBy('id');
-            foreach ($mIds as $id) {
-                if (!isset($items[$id])) continue;
-                $qty = max(1, (int) ($menuJumlah[$id] ?? 1));
-                $totalM += (int) $items[$id]->harga * $qty * $hariTotal; // ← kalau bukan per-hari: hilangkan * $hariTotal
+        // MENU MAKAN (default pakai global check-in/out)
+        $hariReservasi = static::hitungSplitPerRange($checkIn, $checkOut);
+        $hariTotal = max(1, $hariReservasi['weekday'] + $hariReservasi['weekend']);
+        foreach (array_keys(array_filter($menuSelected)) as $mid) {
+            if ($menu = MenuMakan::find((int)$mid)) {
+                $qty = max(1, (int)($menuJumlah[$mid] ?? 1));
+                $subtotal += (int)$menu->harga * $qty * $hariTotal;
             }
         }
 
-        $subtotal = $totalF + $totalA + $totalM;
-
-        $diskon = max(0, min(100, (int) $diskonPersen));
+        // Diskon
+        $diskon = max(0, min(100, (int)$diskonPersen));
         $subtotal -= (int) round($subtotal * ($diskon / 100));
 
-        return max(0, (int) $subtotal);
+        return max(0, (int)$subtotal);
     }
 }

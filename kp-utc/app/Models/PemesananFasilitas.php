@@ -12,7 +12,13 @@ class PemesananFasilitas extends Model
     protected $fillable = [
         'reservasi_id',
         'fasilitas_id', // <-- must be fasilitas_id, not cottage_id
-        'jumlah',
+        'mulai',
+        'selesai'
+    ];
+
+    protected $casts = [
+        'mulai'   => 'datetime',
+        'selesai' => 'datetime',
     ];
 
     public function fasilitas()
