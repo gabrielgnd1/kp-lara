@@ -40,21 +40,40 @@ class CreateReservasi extends CreateRecord
         });
     }
 
-    protected function afterCreate(): void
-    {
-        // Form state sudah berisi array mirror (hidden) untuk fasilitas/additional/menu
-        $state = $this->form->getState();
+  protected function afterCreate(): void
+{
+    // Ambil SEMUA state (hidden mirror juga ikut)
+    $state = $this->form->getRawState();
 
-        ReservasiResource::syncPivotsFromFormState($this->record, $state);
+    // Bersihkan baris hantu yang mungkin sudah keburu dibuat
+    \DB::table('pemesanan_fasilitas')
+        ->where('reservasi_id', $this->record->getKey())
+        ->where(function ($q) {
+            $q->whereNull('fasilitas_id')->orWhere('fasilitas_id', 0);
+        })
+        ->delete();
 
-        \Filament\Notifications\Notification::make()
-            ->title('Reservasi berhasil dibuat!')
-            ->success()
-            ->send();
-    }
+    // Pastikan relasi benar-benar bersih di level Eloquent
+    $this->record->fasilitas()->detach();
 
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
+    // Tulis ulang pivot dari mirror state (punya guard id > 0)
+    \App\Filament\Reservasi\Resources\ReservasiResource::syncPivotsFromFormState(
+        $this->record,
+        $state
+    );
+
+    // Safety net terakhir: kalau MASIH ada 0, hapus lagi
+    \DB::table('pemesanan_fasilitas')
+        ->where('reservasi_id', $this->record->getKey())
+        ->where(function ($q) {
+            $q->whereNull('fasilitas_id')->orWhere('fasilitas_id', 0);
+        })
+        ->delete();
+
+    \Filament\Notifications\Notification::make()
+        ->title('Reservasi berhasil dibuat!')
+        ->success()
+        ->send();
+}
+
 }

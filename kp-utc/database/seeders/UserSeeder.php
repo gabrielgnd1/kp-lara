@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
     \App\Models\User::create([
         'username' => 'lap user',
         'name' => 'Lap UTC',        
-        'email' => 'lap@utc.com',
+        'email' => 'lap1@utc.com',
         'password' => \Illuminate\Support\Facades\Hash::make('test1234'),
         'status' => 'Available',
         'id_role' => 3,

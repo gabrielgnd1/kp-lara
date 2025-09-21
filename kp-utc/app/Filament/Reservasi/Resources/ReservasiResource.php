@@ -15,7 +15,6 @@ use Filament\Tables\Table;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Textarea;
@@ -56,7 +55,7 @@ class ReservasiResource extends Resource
         return $form->schema([
             // ====== LETAKKAN PALING ATAS ======
             Hidden::make('form_ready')
-                ->default(true)            // tidak perlu cek lagi
+                ->default(true)
                 ->dehydrated(false),
 
             Hidden::make('fasilitas_selected')->default([])->dehydrated(false),
@@ -69,30 +68,28 @@ class ReservasiResource extends Resource
             Hidden::make('menu_makan_jumlah')->default([])->dehydrated(false),
             Hidden::make('hari_tipe')->dehydrated(false),
 
-            // ===== Row: Jenis Member (1 baris penuh) =====
+            // ===== Row: Jenis Member =====
             Section::make('')
                 ->schema([
                     Radio::make('ubaya_member')
                         ->label('Jenis Member')
-                        ->options(['Internal' => 'Internal', 'Eksternal' => 'Eksternal'])   
+                        ->options(['Internal' => 'Internal', 'Eksternal' => 'Eksternal'])
                         ->required()
                         ->dehydrated(false)
                         ->reactive()
                         ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc) {
                             $set('fasilitas_selected', []);
-                            // kalau perlu hitung ulang:
-                            if (isset($recalc)) $recalc($get, $set);
+                            $recalc($get, $set);
                         })
                         ->live()
                 ])
                 ->columns(1),
 
-            // ===== Row: Nama Pemesan | No Telepon (jejer/side-by-side) =====
+            // ===== Row: Nama Pemesan | No Telepon =====
             Grid::make([
-                'default' => 1,  // satu kolom di layar kecil
-                'md'      => 2,  // dua kolom di >= md
-            ])
-            ->schema([
+                'default' => 1,
+                'md'      => 2,
+            ])->schema([
                 TextInput::make('nama_pemesan')
                     ->label('Nama Pemesan')
                     ->required()
@@ -100,7 +97,7 @@ class ReservasiResource extends Resource
 
                 TextInput::make('no_telepon')
                     ->label('No Telepon')
-                    ->tel()           // tipe tel (opsional)
+                    ->tel()
                     ->required()
                     ->maxLength(20),
             ]),
@@ -155,7 +152,6 @@ class ReservasiResource extends Resource
                             $jenis = $get('ubaya_member') ?? 'Internal';
                             $groups = static::fasilitasGroupedByNamaForMember($jenis);
 
-                            // gunakan state yang ada
                             $selectedMap = (array) ($get('fasilitas_selected') ?? []);
 
                             return collect($groups)->map(function ($g, $groupKey) use ($recalc, $selectedMap) {
@@ -217,7 +213,6 @@ class ReservasiResource extends Resource
                 ->schema([
                     Group::make()
                         ->schema(function (Get $get) use ($recalc) {
-                            // state existing (agar bisa di-hydrate)
                             $selectedMap = (array) ($get('additional_selected') ?? []);
 
                             return \App\Models\Additional::query()
@@ -278,12 +273,11 @@ class ReservasiResource extends Resource
                 ])
                 ->columns(1),
 
-            // ---------- MENU MAKAN (PAKET MAKANAN) ----------
+            // ---------- MENU MAKAN ----------
             Section::make('Menu Makan')
                 ->schema([
                     Group::make()
                         ->schema(function (Get $get) use ($recalc) {
-                            // state existing (agar bisa di-hydrate)
                             $selectedMap = (array) ($get('menu_makan_selected') ?? []);
                             $jumlahMap   = (array) ($get('menu_makan_jumlah') ?? []);
 
@@ -339,7 +333,7 @@ class ReservasiResource extends Resource
                 ->label('Harga Akhir (Rp)')
                 ->numeric()
                 ->readOnly()
-                ->dehydrated(true), // simpan ke DB
+                ->dehydrated(true),
 
             DateTimePicker::make('tanggal_dibuat')->label('Tanggal Dibuat')->default(now())->required(),
         ]);
@@ -365,7 +359,7 @@ class ReservasiResource extends Resource
             ->striped(false)
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(), 
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
@@ -385,8 +379,10 @@ class ReservasiResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListReservasis::route('/'),
-            'edit'  => Pages\EditReservasi::route('/{record}/edit'),
+            'index'  => Pages\ListReservasis::route('/'),
+            // Tambahkan ini kalau kamu pakai halaman create:
+            // 'create' => Pages\CreateReservasi::route('/create'),
+            'edit'   => Pages\EditReservasi::route('/{record}/edit'),
         ];
     }
 
@@ -398,23 +394,28 @@ class ReservasiResource extends Resource
         $fSelesai  = $state['fasilitas_selesai'] ?? [];
         $fSync = [];
 
-        // ambil mapping fasilitas per-member
         $jenis  = $state['ubaya_member'] ?? 'Internal';
         $groups = static::fasilitasGroupedByNamaForMember($jenis);
 
         foreach (array_keys($fSelected) as $groupKey) {
             if (!isset($groups[$groupKey])) continue;
 
-            // pilih id "utama" (misalnya id weekday kalau ada, atau ambil id pertama)
             $fid = $groups[$groupKey]['id_canonical'] ?? null;
-            if (!$fid) continue;
 
-            $fSync[$fid] = [
+            // FIX: jangan kirim id kosong/null/0
+            if (!$fid || (int)$fid <= 0) {
+                continue;
+            }
+
+            $fSync[(int)$fid] = [
                 'mulai'   => $fMulai[$groupKey]   ?? null,
                 'selesai' => $fSelesai[$groupKey] ?? null,
             ];
         }
-        $record->fasilitas()->sync($fSync);
+
+        if (!empty($fSync)) {
+            $record->fasilitas()->sync($fSync);
+        }
 
         // -------- ADDITIONAL --------
         $aSelected = array_filter($state['additional_selected'] ?? []);
@@ -422,24 +423,35 @@ class ReservasiResource extends Resource
         $aSelesai  = $state['additional_selesai'] ?? [];
         $aSync = [];
         foreach (array_keys($aSelected) as $id) {
-            $aid = (int) $id;
-            $aSync[$aid] = [
-                'mulai'   => $aMulai[$id]   ?? null,
-                'selesai' => $aSelesai[$id] ?? null,
-            ];
+            $aid = (int)$id;
+            if ($aid > 0) {
+                $aSync[$aid] = [
+                    'mulai'   => $aMulai[$id]   ?? null,
+                    'selesai' => $aSelesai[$id] ?? null,
+                ];
+            }
         }
-        $record->additional()->sync($aSync);
+        if (!empty($aSync)) {
+            $record->additional()->sync($aSync);
+        }
 
         // -------- MENU MAKAN --------
         $mSelected = array_filter($state['menu_makan_selected'] ?? []);
         $mJumlah   = $state['menu_makan_jumlah'] ?? [];
         $mSync = [];
         foreach (array_keys($mSelected) as $mid) {
-            $qty = max(1, (int) ($mJumlah[$mid] ?? 1));
-            $mSync[(int) $mid] = ['jumlah' => $qty];
+            $mid = (int)$mid;
+            if ($mid > 0) {
+                $qty = max(1, (int)($mJumlah[$mid] ?? 1));
+                $mSync[$mid] = ['jumlah' => $qty];
+            }
         }
-        $record->menuMakan()->sync($mSync);
+        if (!empty($mSync)) {
+            $record->menuMakan()->sync($mSync);
+        }
     }
+
+    // ===== Helpers =====
 
     protected static function deriveHariTipe(?string $checkIn, ?string $checkOut): ?string
     {
@@ -447,18 +459,16 @@ class ReservasiResource extends Resource
             return null;
         }
 
-        // Jika hanya check-in tersedia, pakai hari check-in.
         if ($checkIn && !$checkOut) {
             $d = Carbon::parse($checkIn);
             return ($d->isSaturday() || $d->isSunday()) ? 'Weekend' : 'Weekday';
         }
 
-        // Jika kedua tanggal ada, iterasikan setiap hari dari check-in s/d (check-out - 1 hari)
         try {
             $start = Carbon::parse($checkIn)->startOfDay();
-            $end   = Carbon::parse($checkOut)->startOfDay(); // biasanya checkout tidak dihitung hari penuh
+            $end   = Carbon::parse($checkOut)->startOfDay();
+
             if ($end->lessThanOrEqualTo($start)) {
-                // fallback: kalau end <= start, pakai hari start saja
                 return ($start->isSaturday() || $start->isSunday()) ? 'Weekend' : 'Weekday';
             }
 
@@ -494,7 +504,7 @@ class ReservasiResource extends Resource
         $weekday = 0; $weekend = 0;
 
         if (!$checkIn || !$checkOut) {
-            return ['weekday' => 1, 'weekend' => 0]; // fallback min 1 hari
+            return ['weekday' => 1, 'weekend' => 0];
         }
 
         try {
@@ -502,7 +512,6 @@ class ReservasiResource extends Resource
             $end   = Carbon::parse($checkOut)->startOfDay();
 
             if ($end->lessThanOrEqualTo($start)) {
-                // fallback: 1 hari berdasarkan hari start
                 if ($start->isSaturday() || $start->isSunday()) $weekend = 1; else $weekday = 1;
                 return compact('weekday', 'weekend');
             }
@@ -515,7 +524,6 @@ class ReservasiResource extends Resource
             $weekday = 1; $weekend = 0;
         }
 
-        // pastikan minimal 1
         if ($weekday + $weekend < 1) $weekday = 1;
 
         return compact('weekday', 'weekend');
@@ -525,21 +533,21 @@ class ReservasiResource extends Resource
     {
         $rows = Fasilitas::query()
             ->where('status', 'Available')
-            ->where('jenis_user', $jenisUser) // Internal / Eksternal
+            ->where('jenis_user', $jenisUser)
             ->get();
 
         $groups = [];
 
         foreach ($rows as $r) {
-            $key = trim(mb_strtolower($r->nama)); // atau pakai $r->kode jika ada kolom kode unik
+            $key = trim(mb_strtolower($r->nama));
 
             if (!isset($groups[$key])) {
                 $groups[$key] = [
                     'nama'           => $r->nama,
-                    'id_list'        => [],      // semua id (opsional, buat referensi)
-                    'id_weekday'     => null,    // id baris fasilitas untuk Weekday
-                    'id_weekend'     => null,    // id baris fasilitas untuk Weekend
-                    'id_canonical'   => null,    // fallback id (gunakan yg tersedia)
+                    'id_list'        => [],
+                    'id_weekday'     => null,
+                    'id_weekend'     => null,
+                    'id_canonical'   => null,
                     'harga_weekday'  => null,
                     'harga_weekend'  => null,
                 ];
@@ -554,17 +562,15 @@ class ReservasiResource extends Resource
             } elseif ($day === 'weekend') {
                 $groups[$key]['id_weekend']    = (int) $r->id;
                 $groups[$key]['harga_weekend'] = (int) $r->harga;
-            } else {
-                // kalau ada data 'day' lain, kamu bisa abaikan atau handle di sini
             }
 
-            // set id_canonical sekali saja: pilih weekday kalau ada, kalau belum ada pakai weekend
             if ($groups[$key]['id_canonical'] === null) {
-                $groups[$key]['id_canonical'] = $groups[$key]['id_weekday'] ?? $groups[$key]['id_weekend'] ?? (int) $r->id;
+                $groups[$key]['id_canonical'] = $groups[$key]['id_weekday']
+                    ?? $groups[$key]['id_weekend']
+                    ?? (int) $r->id;
             }
         }
 
-        // rapikan: unikkan id_list
         foreach ($groups as &$g) {
             $g['id_list'] = array_values(array_unique($g['id_list']));
         }
@@ -572,7 +578,8 @@ class ReservasiResource extends Resource
         return $groups;
     }
 
-    protected static function hitungTotalHarga(
+    // === DIBUAT PUBLIC supaya bisa dipanggil dari Pages ===
+    public static function hitungTotalHarga(
         array $fSelected,
         array $fMulai,
         array $fSelesai,
@@ -588,7 +595,7 @@ class ReservasiResource extends Resource
     ): int {
         $subtotal = 0;
 
-        // FASILITAS ...
+        // FASILITAS
         if ($jenisUser) {
             $groups = static::fasilitasGroupedByNamaForMember($jenisUser);
             foreach ($fSelected as $key => $on) {
@@ -598,7 +605,7 @@ class ReservasiResource extends Resource
 
                 $split = static::hitungSplitPerRange($fMulai[$key] ?? null, $fSelesai[$key] ?? null);
                 $subtotal += ($split['weekday'] * (int)($g['harga_weekday'] ?? 0))
-                        + ($split['weekend'] * (int)($g['harga_weekend'] ?? 0));
+                          +  ($split['weekend'] * (int)($g['harga_weekend'] ?? 0));
             }
         }
 
@@ -629,3 +636,4 @@ class ReservasiResource extends Resource
         return max(0, (int)$subtotal);
     }
 }
+    
