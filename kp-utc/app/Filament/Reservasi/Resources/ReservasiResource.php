@@ -25,6 +25,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Barryvdh\DomPDF\Facade as PDF; // Import Facade DomPDF  
 
 class ReservasiResource extends Resource
 {
@@ -340,31 +341,37 @@ class ReservasiResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('nama_pemesan')->searchable(),
-                Tables\Columns\TextColumn::make('no_telepon')->searchable(),
-                Tables\Columns\TextColumn::make('email')->searchable(),
-                Tables\Columns\TextColumn::make('judul_kegiatan')->searchable(),
-                Tables\Columns\TextColumn::make('waktu_check_in')->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('waktu_check_out')->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('jumlah_laki')->numeric()->sortable(),
-                Tables\Columns\TextColumn::make('jumlah_perempuan')->numeric()->sortable(),
-                Tables\Columns\TextColumn::make('status_reservasi')->badge(),
-                Tables\Columns\TextColumn::make('status_pembayaran')->badge(),
-                Tables\Columns\TextColumn::make('tanggal_dibuat')->dateTime()->sortable(),
-            ])
-            ->paginated()
-            ->striped(false)
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]);
-    }
+{
+    return $table
+        ->columns([
+            Tables\Columns\TextColumn::make('nama_pemesan')->searchable(),
+            Tables\Columns\TextColumn::make('no_telepon')->searchable(),
+            Tables\Columns\TextColumn::make('email')->searchable(),
+            Tables\Columns\TextColumn::make('judul_kegiatan')->searchable(),
+            Tables\Columns\TextColumn::make('waktu_check_in')->dateTime()->sortable(),
+            Tables\Columns\TextColumn::make('waktu_check_out')->dateTime()->sortable(),
+            Tables\Columns\TextColumn::make('jumlah_laki')->numeric()->sortable(),
+            Tables\Columns\TextColumn::make('jumlah_perempuan')->numeric()->sortable(),
+            Tables\Columns\TextColumn::make('status_reservasi')->badge(),
+            Tables\Columns\TextColumn::make('status_pembayaran')->badge(),
+            Tables\Columns\TextColumn::make('tanggal_dibuat')->dateTime()->sortable(),
+        ])
+        ->actions([
+            Tables\Actions\EditAction::make(),
+            Tables\Actions\DeleteAction::make(),
+            // Tambahkan tombol Print PDF
+            Tables\Actions\Action::make('print_pdf')
+                ->label('Print to PDF')
+                ->action(function (Reservasi $record) {
+                    // Generate PDF
+                    $pdf = PDF::loadView('reservasi.pdf', ['reservasi' => $record]);
+                    return $pdf->download('reservasi-'.$record->id.'.pdf');
+                }),
+        ])
+        ->bulkActions([
+            Tables\Actions\DeleteBulkAction::make(),
+        ]);
+}
 
     public static function getRelations(): array
     {
