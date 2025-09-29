@@ -8,7 +8,6 @@
 <body>
     <h1>Detail Reservasi</h1>
     
-    <p>ID: {{ $reservasi->id }}</p>
     <p>Nama Pemesan: {{ $reservasi->nama_pemesan }}</p>
     <p>No Telepon: {{ $reservasi->no_telepon }}</p>
     <p>Email: {{ $reservasi->email }}</p>
