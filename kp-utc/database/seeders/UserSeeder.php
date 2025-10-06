@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
    public function run(): void
 {
     \App\Models\User::create([
-        'username' => 'lap user',
+        'username' => 'lap user',   
         'name' => 'Lap UTC',        
         'email' => 'lap1@utc.com',
         'password' => \Illuminate\Support\Facades\Hash::make('test1234'),

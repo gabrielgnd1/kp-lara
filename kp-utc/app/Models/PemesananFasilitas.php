@@ -8,7 +8,7 @@ class PemesananFasilitas extends Model
 {
     protected $table = 'pemesanan_fasilitas';
     public $timestamps = false;
-
+        
     protected $fillable = [
         'reservasi_id',
         'fasilitas_id', // <-- must be fasilitas_id, not cottage_id
