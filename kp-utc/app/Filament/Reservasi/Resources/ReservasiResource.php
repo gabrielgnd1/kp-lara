@@ -209,91 +209,82 @@ class ReservasiResource extends Resource
             // ---------- FASILITAS ----------
             Section::make('Fasilitas')
                 ->description('Harga otomatis menyesuaikan Weekday/Weekend di rentang tanggal.')
-                ->disabled(false)
-                ->live()
                 ->schema([
-                    Group::make()
-                        ->live()
-                        ->schema(function (Get $get) use ($recalc) {
-                            $jenis = $get('jenis_member') ?? 'Internal';
-                            $groups = static::fasilitasGroupedByNamaForMember($jenis);
+                    Group::make()->schema(function (\Filament\Forms\Get $get) use ($recalc) {
+                        $jenis = $get('jenis_member') ?? 'Internal';
+                        $groups = static::fasilitasGroupedByNamaForMember($jenis);
+                        $selected = (array) ($get('fasilitas_selected') ?? []);
 
-                            $selectedMap = (array) ($get('fasilitas_selected') ?? []);
+                        // daftar per kategori -> [label di UI => groupKey (lowercase)]
+                        $HALL = [
+                            'Multifunction Hall' => 'multifunction hall',
+                            'Hall A/B' => 'hall a/b',
+                            'Hall A+B' => 'hall a+b',
+                            'Welirang Room' => 'welirang room',
+                            'Cinnamon Executive Meeting Room' => 'cinnamon executive meeting room',
+                            'Arjuna Room' => 'arjuna room',
+                            'Pendapa Pawitra' => 'pendapa pawitra',
+                        ];
+                        $COTTAGE = [
+                            'Albizia Cottage' => 'albizia cottage',
+                            'Bamboo Cottage' => 'bamboo cottage',
+                            'Coffee Cottage' => 'coffee cottage',
+                            'Avocado Cottage' => 'avocado cottage',
+                            'Banana Cottage' => 'banana cottage',
+                            'Cassava Cottage' => 'cassava cottage',
+                            'Durian Cottage' => 'durian cottage',
+                        ];
+                        $VIP = [
+                            'VIP Cottage - Asparagus' => 'vip cottage - asparagus',
+                            'VIP Cottage - Brocolli' => 'vip cottage - brocolli',
+                            'VIP Cottage - Celery' => 'vip cottage - celery',
+                            'VIP Cottage - Eucalyptus' => 'vip cottage - eucalyptus',
+                            'VIP Cottage - Fennel' => 'vip cottage - fennel',
+                            'VIP Cottage - Ginger' => 'vip cottage - ginger',
+                            'VIP Cottage - Kiwi' => 'vip cottage - kiwi',
+                            'VIP Cottage - Lemon' => 'vip cottage - lemon',
+                            'VIP Cottage - Mango' => 'vip cottage - mango',
+                            'VIP Cottage - Papaya' => 'vip cottage - papaya',
+                            'VIP Cottage - Tomato' => 'vip cottage - tomato',
+                            'VIP Cottage - Salacca' => 'vip cottage - salacca',
+                        ];
+                        $OTHERS = [
+                            'Camping Ground' => 'camping ground',
+                            'Camping + Tenda' => 'camping + tenda',
+                            'Driver Room' => 'driver room',
+                        ];
 
-                            return collect($groups)->map(function ($g, $groupKey) use ($recalc, $selectedMap) {
-                                $label = $g['nama'];
-                                return Grid::make(3)->schema([
-                                    Checkbox::make("fasilitas_selected.$groupKey")
-                                        ->label($label)
-                                        ->reactive()
-                                        ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $c) use ($groupKey, $selectedMap) {
-                                            $c->state((bool) ($selectedMap[$groupKey] ?? false));
-                                        })
-                                        ->afterStateUpdated(function ($state, Set $set, Get $get) use ($recalc, $groupKey) {
-                                            if ($state === true) {
-                                                $set("fasilitas_mulai.$groupKey", $get('waktu_check_in'));
-                                                $set("fasilitas_selesai.$groupKey", $get('waktu_check_out'));
-                                            }
-                                            $recalc($get, $set);
-                                        }),
+                        // builder untuk 1 box kategori
+                        $buildBox = function (string $title, array $items) use ($groups, $selected, $recalc) {
+                            $rows = [];
+                            foreach ($items as $label => $key) {
+                                if (!isset($groups[$key])) {
+                                    // kalau item tidak ada untuk jenis_member ini, skip
+                                    continue;
+                                }
+                                $rows[] = static::facilityRow($key, $label, $selected, $recalc);
+                            }
+                            if (empty($rows))
+                                return null;
 
-                                    DateTimePicker::make("fasilitas_mulai.$groupKey")
-                                        ->label('Mulai')
-                                        ->native(false) // pastikan pakai Flatpickr agar disabledDates berfungsi
-                                        ->minDate(fn(Get $get) => $get('waktu_check_in'))
-                                        ->maxDate(fn(Get $get) => $get('waktu_check_out'))
-                                        ->disabledDates(fn(Get $get) => static::disabledDatesForGroup($groupKey, $get))
-                                        ->required(fn(Get $get) => $get("fasilitas_selected.$groupKey") === true)
-                                        ->visible(fn(Get $get) => $get("fasilitas_selected.$groupKey") === true)
-                                        ->reactive()
-                                        ->rule(function (Get $get) use ($groupKey) {
-                                            return function (string $attribute, $value, $fail) use ($get, $groupKey) {
-                                                $blocked = \App\Filament\Reservasi\Resources\ReservasiResource::disabledDatesForGroup($groupKey, $get);
-                                                if ($value) {
-                                                    $d = \Carbon\Carbon::parse($value)->format('Y-m-d');
-                                                    if (in_array($d, $blocked, true)) {
-                                                        $fail('Tanggal tersebut sudah dibooking.');
-                                                    }
-                                                }
-                                                $checkIn = $get('waktu_check_in');
-                                                if ($checkIn && $value < $checkIn)
-                                                    $fail('Tanggal mulai tidak boleh sebelum check-in.');
-                                            };
-                                        })
-                                        ->afterStateUpdated(fn($state, \Filament\Forms\Set $set, Get $get) => $recalc($get, $set)),
+                            return \Filament\Forms\Components\Section::make($title)
+                                ->schema($rows)
+                                ->columns(1)
+                                ->collapsible(); // opsional
+                        };
 
-                                    DateTimePicker::make("fasilitas_selesai.$groupKey")
-                                        ->label('Selesai')
-                                        ->native(false)
-                                        ->minDate(fn(Get $get) => $get('waktu_check_in'))
-                                        ->maxDate(fn(Get $get) => $get('waktu_check_out'))
-                                        ->disabledDates(fn(Get $get) => static::disabledDatesForGroup($groupKey, $get))
-                                        ->required(fn(Get $get) => $get("fasilitas_selected.$groupKey") === true)
-                                        ->visible(fn(Get $get) => $get("fasilitas_selected.$groupKey") === true)
-                                        ->reactive()
-                                        ->rule(function (Get $get) use ($groupKey) {
-                                            return function (string $attribute, $value, $fail) use ($get, $groupKey) {
-                                                $blocked = \App\Filament\Reservasi\Resources\ReservasiResource::disabledDatesForGroup($groupKey, $get);
-                                                if ($value) {
-                                                    $d = \Carbon\Carbon::parse($value)->format('Y-m-d');
-                                                    if (in_array($d, $blocked, true)) {
-                                                        $fail('Tanggal tersebut sudah dibooking.');
-                                                    }
-                                                }
-                                                $checkOut = $get('waktu_check_out');
-                                                $mulai = $get("fasilitas_mulai.$groupKey");
-                                                if ($checkOut && $value > $checkOut)
-                                                    $fail('Tanggal selesai tidak boleh setelah check-out.');
-                                                if ($mulai && $value <= $mulai)
-                                                    $fail('Tanggal selesai harus setelah tanggal mulai.');
-                                            };
-                                        })
-                                        ->afterStateUpdated(fn($state, \Filament\Forms\Set $set, Get $get) => $recalc($get, $set)),
-                                ]);
-                            })->values()->all();
-                        }),
+                        $boxes = array_filter([
+                            $buildBox('HALL', $HALL),
+                            $buildBox('COTTAGE', $COTTAGE),
+                            $buildBox('VIP COTTAGE', $VIP),
+                            $buildBox('OTHERS', $OTHERS),
+                        ]);
+
+                        return array_values($boxes);
+                    }),
                 ])
                 ->columns(1),
+
 
             // ---------- ADDITIONAL ----------
             Section::make('Additional')
@@ -852,17 +843,9 @@ class ReservasiResource extends Resource
     // Disabled dates untuk 1 group fasilitas (gabungkan semua id_list)
     protected static function disabledDatesForGroup(string $groupKey, \Filament\Forms\Get $get): array
     {
-        $jenis = $get('jenis_member') ?? 'Internal';
-        $groups = static::fasilitasGroupedByNamaForMember($jenis);
-        $g = $groups[$groupKey] ?? null;
-        if (!$g)
+        $ids = static::facilityIdsByGroupKey($groupKey); // <- semua varian ID untuk fasilitas itu
+        if (empty($ids))
             return [];
-
-        // Pakai semua varian ID yang mungkin dipakai saat simpan (weekday/weekend/canonical)
-        $ids = array_unique(array_filter(array_map('intval', array_merge(
-            $g['id_list'] ?? [],
-            [$g['id_weekday'] ?? 0, $g['id_weekend'] ?? 0, $g['id_canonical'] ?? 0]
-        ))));
 
         $currentId = (int) (request()->route('record') ?? 0) ?: null;
 
@@ -872,4 +855,102 @@ class ReservasiResource extends Resource
         }
         return array_values(array_unique($all));
     }
+
+
+    // Kumpulkan semua ID fasilitas yang secara fisik sama (nama sama), lintas Internal/Eksternal & Weekday/Weekend
+    protected static function facilityIdsByGroupKey(string $groupKey): array
+    {
+        return \App\Models\Fasilitas::query()
+            ->where('status', 'Available')
+            ->whereRaw('LOWER(nama) = ?', [$groupKey]) // $groupKey = strtolower(nama)
+            ->pluck('id')
+            ->map(fn($v) => (int) $v)
+            ->all();
+    }
+
+    protected static function facilityRow(string $groupKey, string $label, array $selectedMap, callable $recalc)
+    {
+        return \Filament\Forms\Components\Grid::make(3)->schema([
+            \Filament\Forms\Components\Checkbox::make("fasilitas_selected.$groupKey")
+                ->label($label)
+                ->reactive()
+                ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $c) use ($groupKey, $selectedMap) {
+                    $c->state((bool) ($selectedMap[$groupKey] ?? false));
+                })
+                ->afterStateUpdated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) use ($recalc, $groupKey) {
+                    if ($state === true) {
+                        $set("fasilitas_mulai.$groupKey", $get('waktu_check_in'));
+                        $set("fasilitas_selesai.$groupKey", $get('waktu_check_out'));
+                    }
+                    $recalc($get, $set);
+                }),
+
+            \Filament\Forms\Components\DateTimePicker::make("fasilitas_mulai.$groupKey")
+                ->label('Mulai')
+                ->native(false) // wajib agar disabledDates berfungsi
+                ->minDate(fn(\Filament\Forms\Get $get) => $get('waktu_check_in'))
+                ->maxDate(fn(\Filament\Forms\Get $get) => $get('waktu_check_out'))
+                ->disabledDates(fn(\Filament\Forms\Get $get) => static::disabledDatesForGroup($groupKey, $get))
+                ->required(fn(\Filament\Forms\Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                ->visible(fn(\Filament\Forms\Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                ->reactive()
+                ->rule(function (\Filament\Forms\Get $get) use ($groupKey) {
+                    return function (string $attribute, $value, $fail) use ($get, $groupKey) {
+                        if (!$value)
+                            return;
+                        $start = \Carbon\Carbon::parse($value)->startOfDay();
+                        $endRaw = $get("fasilitas_selesai.$groupKey");
+                        $end = $endRaw ? \Carbon\Carbon::parse($endRaw)->startOfDay() : $start->copy()->addDay();
+                        $blocked = \App\Filament\Reservasi\Resources\ReservasiResource::disabledDatesForGroup($groupKey, $get);
+                        $set = array_flip($blocked);
+                        foreach (\Carbon\CarbonPeriod::create($start, $end->copy()->subDay()) as $d) {
+                            if (isset($set[$d->format('Y-m-d')])) {
+                                $fail('Rentang tanggal fasilitas bentrok.');
+                                break;
+                            }
+                        }
+                        $checkIn = $get('waktu_check_in');
+                        if ($checkIn && $value < $checkIn)
+                            $fail('Tanggal mulai < check-in.');
+                    };
+                })
+                ->afterStateUpdated(fn($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) => $recalc($get, $set)),
+
+            \Filament\Forms\Components\DateTimePicker::make("fasilitas_selesai.$groupKey")
+                ->label('Selesai')
+                ->native(false)
+                ->minDate(fn(\Filament\Forms\Get $get) => $get('waktu_check_in'))
+                ->maxDate(fn(\Filament\Forms\Get $get) => $get('waktu_check_out'))
+                ->disabledDates(fn(\Filament\Forms\Get $get) => static::disabledDatesForGroup($groupKey, $get))
+                ->required(fn(\Filament\Forms\Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                ->visible(fn(\Filament\Forms\Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                ->reactive()
+                ->rule(function (\Filament\Forms\Get $get) use ($groupKey) {
+                    return function (string $attribute, $value, $fail) use ($get, $groupKey) {
+                        if (!$value)
+                            return;
+                        $end = \Carbon\Carbon::parse($value)->startOfDay();
+                        $startRaw = $get("fasilitas_mulai.$groupKey");
+                        if (!$startRaw)
+                            return;
+                        $start = \Carbon\Carbon::parse($startRaw)->startOfDay();
+                        if ($end->lessThanOrEqualTo($start))
+                            $fail('Selesai harus > Mulai.');
+                        $blocked = \App\Filament\Reservasi\Resources\ReservasiResource::disabledDatesForGroup($groupKey, $get);
+                        $set = array_flip($blocked);
+                        foreach (\Carbon\CarbonPeriod::create($start, $end->copy()->subDay()) as $d) {
+                            if (isset($set[$d->format('Y-m-d')])) {
+                                $fail('Rentang tanggal fasilitas bentrok.');
+                                break;
+                            }
+                        }
+                        $checkOut = $get('waktu_check_out');
+                        if ($checkOut && $value > $checkOut)
+                            $fail('Tanggal selesai > check-out.');
+                    };
+                })
+                ->afterStateUpdated(fn($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) => $recalc($get, $set)),
+        ]);
+    }
+
 }
