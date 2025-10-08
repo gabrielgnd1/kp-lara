@@ -11,6 +11,12 @@ class EditReservasi extends EditRecord
 {
     protected static string $resource = ReservasiResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        // setelah Save, balik ke daftar (index)
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -67,7 +73,7 @@ class EditReservasi extends EditRecord
         // Optional: isi default radio & hari_tipe agar section fasilitas tampil
         if ($record->fasilitas->first()) {
             $first = $record->fasilitas->first();
-            $data['ubaya_member'] = $data['ubaya_member'] ?? $first->jenis_user;
+            $data['jenis_member'] = $data['jenis_member'] ?? $first->jenis_user;
             $data['hari_tipe']    = $data['hari_tipe']    ?? $first->day;
         }
 
@@ -91,7 +97,7 @@ class EditReservasi extends EditRecord
         $mJml = (array) ($state['menu_makan_jumlah']   ?? []);
 
         $disk  = (int)   ($data['diskon'] ?? 0);
-        $jenis = (string)($data['ubaya_member'] ?? $state['ubaya_member'] ?? 'Internal');
+        $jenis = (string)($data['jenis_member'] ?? $state['jenis_member'] ?? 'Internal');
         $cin   = $data['waktu_check_in']  ?? $state['waktu_check_in']  ?? null;
         $cout  = $data['waktu_check_out'] ?? $state['waktu_check_out'] ?? null;
 

@@ -28,11 +28,10 @@ class Fasilitas extends Model
         return $this->hasMany(PemesananFasilitas::class, 'fasilitas_id');
     }
 
-    //deklarasi bahwa field harga_fasilitas_id di tabel ini adalah milik table HargaFasilitas
-    public function hargaFasilitas()
+    public function reservasis()
     {
-        return $this->belongsTo(HargaFasilitas::class, 'harga_fasilitas_id');
+        return $this->belongsToMany(Reservasi::class, 'pemesanan_fasilitas', 'fasilitas_id', 'reservasi_id')
+            ->withPivot(['mulai','selesai']);
     }
 
-    
 }

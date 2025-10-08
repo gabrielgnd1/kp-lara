@@ -14,7 +14,7 @@ class Reservasi extends Model
 
     // Only columns that actually exist in your DB
     protected $fillable = [
-        'nama_pemesan','no_telepon','email','judul_kegiatan',
+        'jenis_member','nama_pemesan','no_telepon','email','judul_kegiatan',
         'waktu_check_in','waktu_check_out',
         'jumlah_laki','jumlah_perempuan','informasi_tambahan',
         'diskon', 'harga_akhir',
