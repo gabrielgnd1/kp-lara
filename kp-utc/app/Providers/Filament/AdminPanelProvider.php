@@ -41,7 +41,13 @@ class AdminPanelProvider extends PanelProvider
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
-            ->login(\App\Filament\Pages\Auth\Login::class)
+            ->registration(false)
+            ->passwordReset(false)
+            ->emailVerification(false)
+            ->profile(false)
+            ->login(false)  // Disable Filament's login page
+            ->authGuard('web')  // Use the default web guard
+            ->authPasswordBroker('users')
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

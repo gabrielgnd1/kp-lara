@@ -16,7 +16,17 @@ class AdminLaporanResource extends Resource
     protected static ?string $model = Laporan::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Report Management';
-    protected static ?string $navigationLabel = 'All Reports';
+    protected static ?string $navigationLabel = 'Laporan';
+
+    public static function getModelLabel(): string
+    {
+        return 'Laporan';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Laporan';
+    }
 
     public static function form(Form $form): Form
     {
@@ -76,11 +86,12 @@ class AdminLaporanResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nama_laporan')
-                    ->label('Report Name')
+                    ->label('Nama Laporan')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('foto_laporan')
-                    ->label('Photo'),
+                    ->label('Foto'),
                 Tables\Columns\TextColumn::make('prioritas')
+                    ->label('Prioritas')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Tinggi' => 'danger',
@@ -88,7 +99,7 @@ class AdminLaporanResource extends Resource
                         'Rendah' => 'info',
                     }),
                 Tables\Columns\TextColumn::make('tipe_laporan')
-                    ->label('Type'),
+                    ->label('Tipe Laporan'),
                 Tables\Columns\TextColumn::make('decision')
                     ->label('Status')
                     ->badge()
@@ -98,7 +109,7 @@ class AdminLaporanResource extends Resource
                         'Belum Diproses' => 'danger',
                     }),
                 Tables\Columns\TextColumn::make('tanggal_lapor')
-                    ->label('Report Date')
+                    ->label('Tanggal Lapor')
                     ->date()
                     ->sortable(),
             ])

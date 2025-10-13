@@ -1,60 +1,56 @@
-{{-- resources/views/livewire/auth/login.blade.php --}}
-<div class="min-h-[100dvh] flex items-center justify-center px-4 bg-[#0B5D3B]">
-    <div class="w-full max-w-sm bg-white/95 backdrop-blur-xl p-6 sm:p-8 rounded-2xl shadow-xl">
-        {{-- Header --}}
-        <div class="mb-6 text-center">
-            {{-- Logo bisa ditaruh di sini --}}
-            {{-- <img src="{{ asset('images/logo.png') }}" class="mx-auto h-12 mb-3" alt="Logo"> --}}
-            <h2 class="text-2xl font-bold text-[#1F2937]">Login</h2>
-            <p class="text-sm text-gray-500 mt-1">Masuk untuk melanjutkan</p>
+<div class="flex min-h-screen items-center justify-center bg-gray-950 py-12">
+    <div class="w-screen max-w-md">
+        <div class="space-y-8 px-6 py-12 bg-gray-900 shadow-xl rounded-xl sm:px-12 sm:py-16">
+            <h2 class="text-center text-2xl font-bold tracking-tight text-white">
+                Log In to Your Account
+            </h2>
+
+            <form wire:submit.prevent="login" class="mt-8 space-y-6">
+                <div class="space-y-4 -mt-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium leading-6 text-white">
+                            Email
+                        </label>
+                        <div class="mt-2">
+                            <input id="email" type="email" wire:model.defer="email" required
+                                   class="block w-full rounded-lg border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-amber-500 sm:text-sm sm:leading-6"
+                                   placeholder="you@email.com" />
+                            @error('email') <p class="mt-2 text-sm text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium leading-6 text-white">
+                            Password
+                        </label>
+                        <div class="mt-2">
+                            <input id="password" type="password" wire:model.defer="password" required
+                                   class="block w-full rounded-lg border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-amber-500 sm:text-sm sm:leading-6"
+                                   placeholder="••••••••" />
+                            @error('password') <p class="mt-2 text-sm text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    <input id="remember" type="checkbox" wire:model.defer="remember"
+                           class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-amber-500 focus:ring-amber-500" />
+                    <label for="remember" class="ml-3 block text-sm leading-6 text-white">
+                        Remember me
+                    </label>
+                </div>
+
+                <div>
+                    <button type="submit"
+                            class="flex w-full justify-center rounded-lg bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500">
+                        Log In
+                    </button>
+                </div>
+
+                <div class="text-center text-sm text-gray-400">
+                    © {{ date('Y') }} — UTC IOC / UPC
+                </div>
+            </form>
         </div>
-
-        {{-- Form --}}
-        <form wire:submit.prevent="login" class="space-y-4">
-            {{-- Email --}}
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input id="email" type="email" wire:model.defer="email" required
-                       class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm 
-                              focus:outline-none focus:ring-2 focus:ring-[#7BB542]"
-                       placeholder="you@email.com" />
-                @error('email') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            {{-- Password --}}
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input id="password" type="password" wire:model.defer="password" required
-                       class="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm 
-                              focus:outline-none focus:ring-2 focus:ring-[#7BB542]"
-                       placeholder="••••••••" />
-                @error('password') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            {{-- Remember me --}}
-            <div class="flex items-center justify-between text-sm">
-                <label class="inline-flex items-center gap-2 text-gray-700">
-                    <input id="remember" type="checkbox" wire:model="remember"
-                           class="rounded border-gray-300 focus:ring-2 focus:ring-[#7BB542]" />
-                    Remember me
-                </label>
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="text-[#0B5D3B] hover:underline font-medium">Daftar</a>
-                @endif
-            </div>
-
-            {{-- Submit --}}
-            <button type="submit"
-                    class="w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-lg
-                           text-white shadow-md transition
-                           bg-[#7BB542] hover:bg-[#689a3b] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]">
-                Login
-            </button>
-        </form>
-
-        {{-- Footer --}}
-        <p class="mt-6 text-center text-xs text-[#D4AF37]">
-            © {{ now()->year }} — UTC IOC / UPC
-        </p>
     </div>
 </div>

@@ -13,23 +13,23 @@ class AdminStatsOverview extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Total Facilities', Fasilitas::count())
-                ->description('Total number of facilities')
+            Stat::make('Total Fasilitas', Fasilitas::distinct('nama')->count('nama'))
+                ->description('Jumlah total fasilitas yang tersedia')
                 ->descriptionIcon('heroicon-m-building-office')
                 ->color('success'),
             
-            Stat::make('Active Reservations', Reservasi::where('status_reservasi', 'ACC')->count())
-                ->description('Currently active reservations')
+            Stat::make('Reservasi Aktif', Reservasi::where('status_reservasi', 'ACC')->count())
+                ->description('Reservasi yang sedang berlangsung')
                 ->descriptionIcon('heroicon-m-calendar')
                 ->color('primary'),
 
-            Stat::make('Pending Reports', Laporan::where('decision', 'Belum Diproses')->count())
-                ->description('Reports requiring attention')
+            Stat::make('Laporan Tertunda', Laporan::where('decision', 'Belum Diproses')->count())
+                ->description('Laporan yang membutuhkan perhatian')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color('warning'),
 
-            Stat::make('Available Facilities', Fasilitas::where('status', 'Available')->count())
-                ->description('Facilities ready for booking')
+            Stat::make('Fasilitas Tersedia', Fasilitas::where('status', 'Available')->distinct('nama')->count('nama'))
+                ->description('Fasilitas yang siap untuk dipesan')
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
         ];

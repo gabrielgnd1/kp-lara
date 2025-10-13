@@ -2,18 +2,37 @@
 
 namespace App\Filament\Pages\Auth;
 
-use Filament\Pages\Auth\Login as BaseLoginPage;
+use Filament\Pages\Auth\Login as BaseLogin;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Forms\Components\TextInput;
 use Illuminate\Contracts\Support\Htmlable;
+use Filament\Http\Responses\Auth\Contracts\LoginResponse;
+use Filament\Facades\Filament;
+use Illuminate\Validation\ValidationException;
 
-class Login extends BaseLoginPage
+class Login extends BaseLogin
 {
     public function mount(): void
     {
         parent::mount();
 
-        if (auth()->guard('web')->check() && auth()->guard('web')->user()->id_role !== 1) {
+        if (auth()->check() && auth()->user()->id_role !== 1) {
             abort(403, 'Unauthorized. Admin access required.');
         }
+    }
+
+    public function form(Form $form): Form
+    {
+        return $form->schema([
+            TextInput::make('username')
+                ->label('Username')
+                ->required()
+                ->autocomplete()
+                ->autofocus(),
+            $this->getPasswordFormComponent(),
+            $this->getRememberFormComponent(),
+        ]);
     }
 
     public function getHeading(): string|Htmlable

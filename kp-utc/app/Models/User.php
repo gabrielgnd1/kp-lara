@@ -15,7 +15,9 @@ class User extends Authenticatable implements FilamentUserContract
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
     //karena nama file User & nama table bukan users jadi hrs dideklarasi
     protected $table = 'user';
-    public $timestamps = false; // karena di table user tidak ada created_at & updated_at
+
+    //karena di table user tidak ada created_at & updated_at
+    public $timestamps = false;
 
     //ini isi smua atribut selain primary key
     protected $fillable = [
@@ -26,6 +28,17 @@ class User extends Authenticatable implements FilamentUserContract
         'id_role',
         'status'
     ];
+
+    // Map is_active to status for Filament
+    public function getIsActiveAttribute()
+    {
+        return $this->status === 'Available';
+    }
+
+    public function setIsActiveAttribute($value)
+    {
+        $this->attributes['status'] = $value ? 'Available' : 'Not Available';
+    }
 
     //hidden ini artinya data yang ada disini gaakan direturn waktu dipanggil
     protected $hidden = [

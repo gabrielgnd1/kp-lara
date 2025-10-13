@@ -84,19 +84,42 @@
             font-weight: bold;
         }
         
-        .status-baru {
-            background: #e5e7eb;
-            color: #374151;
-        }
-        
+        /* Status Reservasi colors */
         .status-acc {
-            background: #c6f6d5;
-            color: #22543d;
+            background: rgba(213, 175, 55, 0.1);  /* Gold with transparency */
+            color: #D4AF37;       /* Gold */
+            border: 1px solid #D4AF37;
         }
         
         .status-not-acc {
-            background: #fed7d7;
-            color: #742a2a;
+            background: rgba(213, 175, 55, 0.1);  /* Gold with transparency */
+            color: #D4AF37;       /* Gold */
+            border: 1px solid #D4AF37;
+        }
+        
+        .status-cancelled {
+            background: rgba(220, 38, 38, 0.1);  /* Red with transparency */
+            color: #DC2626;       /* Red */
+            border: 1px solid #DC2626;
+        }
+
+        /* Status Pembayaran colors */
+        .status-lunas {
+            background: rgba(213, 175, 55, 0.1);  /* Gold with transparency */
+            color: #D4AF37;       /* Gold */
+            border: 1px solid #D4AF37;
+        }
+
+        .status-dp, .status-baru {
+            background: rgba(213, 175, 55, 0.1);  /* Gold with transparency */
+            color: #D4AF37;       /* Gold */
+            border: 1px solid #D4AF37;
+        }
+
+        .status-batal {
+            background: rgba(220, 38, 38, 0.1);  /* Red with transparency */
+            color: #DC2626;       /* Red */
+            border: 1px solid #DC2626;
         }
         
         .footer {

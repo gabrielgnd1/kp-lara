@@ -8,6 +8,10 @@ use Filament\Facades\Filament;
 
 class Login extends Component
 {
+    public function layout()
+    {
+        return 'layouts.auth-layout';
+    }
     public $email = '';
     public $password = '';
     public $remember = false;
@@ -22,27 +26,25 @@ class Login extends Component
         if (Auth::attempt([
             'email' => $this->email,    
             'password' => $this->password,
+            'status' => 'Available',  // Only allow active users
         ], $this->remember)) {
             session()->regenerate();
 
             $user = Auth::user();
+            
+            // Map role IDs to panel names
+            $rolePanels = [
+                1 => 'admin',
+                2 => 'reservasi',
+                3 => 'lapangan',
+            ];
 
-          //lek 3 ke lapangan
-            if ($user->id_role == 3 && $user->status === 'Available') {
-                return redirect(Filament::getPanel('lapangan')->getUrl());
+            if (isset($rolePanels[$user->id_role])) {
+                $panel = Filament::getPanel($rolePanels[$user->id_role]);
+                if ($panel) {
+                    return redirect($panel->getUrl());
+                }
             }
-
-            //id 1 ke admin
-            if ($user->id_role == 1 && $user->status === 'Available') {
-                return redirect(Filament::getPanel('admin')->getUrl());
-            }
-
-            //lek 2 ke resevasi
-            if ($user->id_role == 2 && $user->status === 'Available') {
-                return redirect(Filament::getPanel('reservasi')->getUrl());
-            }
-
-            //tinggal tambah panel lain 
 
             Auth::logout();
             $this->addError('email', 'Akun Anda tidak memiliki akses yang valid.');
@@ -53,6 +55,6 @@ class Login extends Component
 
     public function render()
     {
-        return view('livewire.auth.login')->layout('layouts.filament');
+        return view('livewire.auth.login');
     }
 }

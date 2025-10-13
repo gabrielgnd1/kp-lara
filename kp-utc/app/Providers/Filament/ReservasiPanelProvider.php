@@ -31,10 +31,10 @@ class ReservasiPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/Reservasi/Resources'), for: 'App\\Filament\\Reservasi\\Resources')
-            ->discoverPages(in: app_path('Filament/Reservasi/Pages'), for: 'App\\Filament\\Reservasi\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Reservasi\Pages\Dashboard::class,
             ])
+            ->discoverPages(in: app_path('Filament/Reservasi/Pages'), for: 'App\\Filament\\Reservasi\\Pages')
             ->discoverWidgets(in: app_path('Filament/Reservasi/Widgets'), for: 'App\\Filament\\Reservasi\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,

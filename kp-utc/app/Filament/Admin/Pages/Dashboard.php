@@ -9,15 +9,17 @@ class Dashboard extends BaseDashboard
 {
     protected static ?string $navigationIcon = 'heroicon-o-home';
     protected static string $view = 'filament.admin.pages.dashboard';
+    protected static ?string $navigationLabel = 'Dashboard';
+    protected static ?string $title = 'Dashboard';
 
-    protected function getHeaderWidgets(): array
+    public function getWidgets(): array
     {
         return [
             AdminStatsOverview::class,
         ];
     }
 
-    public function getHeaderWidgetsColumns(?string $breakpoint = null): int
+    public function getColumns(): int
     {
         return 4;
     }

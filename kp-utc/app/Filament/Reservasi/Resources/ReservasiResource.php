@@ -257,10 +257,11 @@ class ReservasiResource extends Resource
                             ];
 
                             $OTHERS = [
-                                'Camping Ground A' => 'camping ground a',
-                                'Camping Ground B' => 'camping ground b',
-                                'Camping Ground C' => 'camping ground c',
-                                'Camping Ground D' => 'camping ground d',
+                                'Camping Ground 1' => 'camping ground 1',
+                                'Camping Ground 2' => 'camping ground 2',
+                                'Camping Ground 3' => 'camping ground 3',
+                                'Camping Ground 4' => 'camping ground 4',
+                                'Camping Ground 5' => 'camping ground 5',
                                 'Camping + Tenda' => 'camping + tenda',
                                 'Driver Room' => 'driver room',
                             ];
@@ -474,30 +475,52 @@ class ReservasiResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nama_pemesan')
+                    ->label('Nama Pemesan')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('no_telepon')
+                    ->label('No Telepon')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('judul_kegiatan')
+                    ->label('Judul Kegiatan')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('waktu_check_in')
+                    ->label('Waktu Check In')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('waktu_check_out')
+                    ->label('Waktu Check Out')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('jumlah_laki')
+                    ->label('Jumlah Laki')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('jumlah_perempuan')
+                    ->label('Jumlah Perempuan')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status_reservasi')
-                    ->badge(),
+                    ->label('Status Reservasi')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'ACC' => 'warning',
+                        'NOT ACC' => 'warning',
+                        'CANCELLED' => 'danger',
+                    }),
                 Tables\Columns\TextColumn::make('status_pembayaran')
-                    ->badge(),
+                    ->label('Status Pembayaran')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'LUNAS' => 'warning',
+                        'DP' => 'warning',
+                        'BARU' => 'warning',
+                        'BATAL' => 'danger',
+                    }),
                 Tables\Columns\TextColumn::make('tanggal_dibuat')
+                    ->label('Tanggal Dibuat')
                     ->dateTime()
                     ->sortable(),
             ])

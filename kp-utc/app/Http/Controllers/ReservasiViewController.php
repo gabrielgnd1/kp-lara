@@ -6,6 +6,11 @@ use App\Models\Reservasi;
 
 class ReservasiViewController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+    
     public function show($id)
     {
         $reservasi = Reservasi::findOrFail($id);

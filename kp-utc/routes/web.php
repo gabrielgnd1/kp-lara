@@ -7,9 +7,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservasiController;
 use App\Http\Controllers\ReservasiViewController;
 
-Route::get('/reservasi/pdf', [ReservasiController::class, 'printPdf']);
-Route::get('/reservasi/{id}', [ReservasiViewController::class, 'show'])->name('reservasi.detail');
-
+Route::middleware('auth')->group(function () {
+    Route::get('/reservasi/pdf', [ReservasiController::class, 'printPdf']);
+    Route::get('/reservasi/{id}', [ReservasiViewController::class, 'show'])->name('reservasi.detail');
+});
 
 Route::get('/', fn () => redirect('/login')); // redirect root ke login
 Route::get('/login', LoginComponent::class)->name('login');

@@ -68,14 +68,15 @@ class FasilitasResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nama')
-                    ->label('Facility')
+                    ->label('Nama Fasilitas')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('kapasitas')
-                    ->label('Capacity')
+                    ->label('Kapasitas')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Available' => 'success',
@@ -83,10 +84,28 @@ class FasilitasResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('jenis_user')
-                    ->label('User Type')
+                    ->label('Jenis Pengguna')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('menginap')
+                    ->label('Tipe Menginap')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Menginap' => 'info',
+                        'Tidak Menginap' => 'warning',
+                        default => 'secondary',
+                    })
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('day')
+                    ->label('Tipe Hari')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Weekday' => 'success',
+                        'Weekend' => 'primary',
+                        default => 'secondary',
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('harga')
-                    ->label('Price')
+                    ->label('Harga')
                     ->money('IDR')
                     ->sortable(),
             ])
@@ -95,6 +114,18 @@ class FasilitasResource extends Resource
                     ->options([
                         'Available' => 'Available',
                         'Not Available' => 'Not Available',
+                    ]),
+                Tables\Filters\SelectFilter::make('menginap')
+                    ->label('Stay Type')
+                    ->options([
+                        'Menginap' => 'Overnight Stay',
+                        'Tidak Menginap' => 'Day Use',
+                    ]),
+                Tables\Filters\SelectFilter::make('day')
+                    ->label('Day Type')
+                    ->options([
+                        'Weekday' => 'Weekday',
+                        'Weekend' => 'Weekend',
                     ]),
                 Tables\Filters\SelectFilter::make('jenis_user')
                     ->options([
