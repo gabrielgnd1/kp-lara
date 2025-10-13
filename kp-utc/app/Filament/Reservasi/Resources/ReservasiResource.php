@@ -9,6 +9,7 @@ use App\Models\Additional;
 use App\Models\MenuMakan;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Illuminate\Support\Facades\DB;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -117,7 +118,7 @@ class ReservasiResource extends Resource
                 ($get('jenis_member') ?? 'Internal'),
                 $get('waktu_check_in'),
                 $get('waktu_check_out'),
-                (int) ($get('jumlah_orang') ?? 1)
+                (array) ($get('fasilitas_jumlah_orang') ?? [])
             );
             $set('harga_akhir', (int) max(0, $total));
         };
@@ -130,6 +131,7 @@ class ReservasiResource extends Resource
             Hidden::make('fasilitas_selected')->default([])->dehydrated(false),
             Hidden::make('fasilitas_mulai')->default([])->dehydrated(false),
             Hidden::make('fasilitas_selesai')->default([])->dehydrated(false),
+            Hidden::make('fasilitas_jumlah_orang')->default([])->dehydrated(false),
             Hidden::make('additional_selected')->default([])->dehydrated(false),
             Hidden::make('additional_mulai')->default([])->dehydrated(false),
             Hidden::make('additional_selesai')->default([])->dehydrated(false),
@@ -255,7 +257,10 @@ class ReservasiResource extends Resource
                             ];
 
                             $OTHERS = [
-                                'Camping Ground' => 'camping ground',
+                                'Camping Ground A' => 'camping ground a',
+                                'Camping Ground B' => 'camping ground b',
+                                'Camping Ground C' => 'camping ground c',
+                                'Camping Ground D' => 'camping ground d',
                                 'Camping + Tenda' => 'camping + tenda',
                                 'Driver Room' => 'driver room',
                             ];
@@ -499,23 +504,11 @@ class ReservasiResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('print_pdf')
-                    ->label('Print to PDF')
-                    ->action(function (Reservasi $record) {
-                        $data = static::sanitizeData($record->fresh()->toArray());
-
-                        $html = view('reservasi.pdf', ['reservasi' => $data])->render();
-                        $html = static::sanitizeHtml($html);
-
-                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
-                            ->setPaper('a4')
-                            ->setOptions(static::configurePdfOptions());
-
-                        return response($pdf->output(), 200, [
-                            'Content-Type' => 'application/pdf',
-                            'Content-Disposition' => 'attachment; filename=reservasi-' . $record->id . '.pdf',
-                        ]);
-                    }),
+                Tables\Actions\Action::make('view_detail')
+                    ->label('View Detail')
+                    ->url(fn (Reservasi $record): string => route('reservasi.detail', ['id' => $record->id]))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Reservasi $record): bool => $record->exists),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
@@ -796,11 +789,10 @@ class ReservasiResource extends Resource
         ?string $jenisUser = null,
         ?string $checkIn = null,
         ?string $checkOut = null,
-        ?int $jumlahOrang = null
+        ?array $fJumlahOrang = null
     ): int {
         $subtotal = 0;
         $perPersonKeys = ['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'];
-        $jumlahOrang = max(1, (int) ($jumlahOrang ?? 1));
 
         if ($jenisUser) {
             $groups = static::fasilitasGroupedByNamaForMember($jenisUser);
@@ -815,9 +807,11 @@ class ReservasiResource extends Resource
                 $base = ($split['weekday'] * (int) ($g['harga_weekday'] ?? 0))
                     + ($split['weekend'] * (int) ($g['harga_weekend'] ?? 0));
 
-                $mult = in_array($key, $perPersonKeys, true) ? $jumlahOrang : 1;
+                $jumlahOrang = in_array($key, $perPersonKeys, true) 
+                    ? max(1, (int)($fJumlahOrang[$key] ?? 1))
+                    : 1;
 
-                $subtotal += $mult * $base;
+                $subtotal += $jumlahOrang * $base;
             }
         }
 
@@ -852,7 +846,7 @@ class ReservasiResource extends Resource
         if (isset(static::$bookedDateCache[$cacheKey]))
             return static::$bookedDateCache[$cacheKey];
 
-        $rows = \DB::table('pemesanan_fasilitas')
+        $rows = DB::table('pemesanan_fasilitas')
             ->select('mulai', 'selesai', 'reservasi_id')
             ->where('fasilitas_id', $facilityId)
             ->when($excludeReservasiId, fn($q) => $q->where('reservasi_id', '!=', $excludeReservasiId))
@@ -903,7 +897,10 @@ class ReservasiResource extends Resource
 
     protected static function facilityRow(string $groupKey, string $label, array $selectedMap, callable $recalc)
     {
-        return \Filament\Forms\Components\Grid::make(3)->schema([
+        $perPersonCottages = ['avocado cottage', 'banana cottage', 'durian cottage', 'cassava cottage'];
+        $isPerPerson = in_array($groupKey, $perPersonCottages);
+        
+        $schema = [
             \Filament\Forms\Components\Checkbox::make("fasilitas_selected.$groupKey")
                 ->label($label)
                 ->reactive()
@@ -984,7 +981,25 @@ class ReservasiResource extends Resource
                     };
                 })
                 ->afterStateUpdated(fn($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) => $recalc($get, $set)),
-        ]);
+        ];
+
+        if ($isPerPerson) {
+            $schema[] = \Filament\Forms\Components\TextInput::make("fasilitas_jumlah_orang.$groupKey")
+                ->label('Jumlah Orang')
+                ->numeric()
+                ->minValue(1)
+                ->default(1)
+                ->required(fn(\Filament\Forms\Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                ->visible(fn(\Filament\Forms\Get $get) => $get("fasilitas_selected.$groupKey") === true)
+                ->reactive()
+                ->afterStateUpdated(fn($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) => $recalc($get, $set))
+                ->afterStateHydrated(function (\Filament\Forms\Components\TextInput $component, \Filament\Forms\Get $get) use ($groupKey) {
+                    $jumlahOrang = $get("fasilitas_jumlah_orang.$groupKey") ?? 1;
+                    $component->state((int) $jumlahOrang);
+                });
+        }
+        
+        return \Filament\Forms\Components\Grid::make($isPerPerson ? 4 : 3)->schema($schema);
     }
 
 }
