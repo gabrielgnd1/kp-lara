@@ -81,7 +81,7 @@ class ReservasiResource extends Resource
                 $enc = mb_detect_encoding($data, ['UTF-8', 'Windows-1252', 'ISO-8859-1'], true) ?: 'Windows-1252';
                 $data = mb_convert_encoding($data, 'UTF-8', $enc);
             }
-            // buang byte terlarang untuk JSON/HTML
+
             $data = @iconv('UTF-8', 'UTF-8//IGNORE', $data);
             $data = preg_replace('/[^\x09\x0A\x0D\x20-\x7E\x{A0}-\x{10FFFF}]/u', '', $data);
             return $data;
@@ -95,13 +95,15 @@ class ReservasiResource extends Resource
             $html = mb_convert_encoding($html, 'UTF-8', 'auto');
         }
         $html = @iconv('UTF-8', 'UTF-8//IGNORE', $html);
-        // dompdf nyaman dengan HTML-ENTITIES juga
         return mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
     }
 
     public static function form(Form $form): Form
     {
         $recalc = function (Get $get, callable $set) {
+            $selectedKeys = array_keys(array_filter((array) $get('fasilitas_selected')));
+            $perPerson = ['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'];
+
             $total = static::hitungTotalHarga(
                 (array) ($get('fasilitas_selected') ?? []),
                 (array) ($get('fasilitas_mulai') ?? []),
@@ -114,13 +116,13 @@ class ReservasiResource extends Resource
                 (int) ($get('diskon') ?? 0),
                 ($get('jenis_member') ?? 'Internal'),
                 $get('waktu_check_in'),
-                $get('waktu_check_out')
+                $get('waktu_check_out'),
+                (int) ($get('jumlah_orang') ?? 1)
             );
             $set('harga_akhir', (int) max(0, $total));
         };
 
         return $form->schema([
-            // ====== LETAKKAN PALING ATAS ======
             Hidden::make('form_ready')
                 ->default(true)
                 ->dehydrated(false),
@@ -135,7 +137,6 @@ class ReservasiResource extends Resource
             Hidden::make('menu_makan_jumlah')->default([])->dehydrated(false),
             Hidden::make('hari_tipe')->dehydrated(false),
 
-            // ===== Row: Jenis Member =====
             Section::make('')
                 ->schema([
                     Radio::make('jenis_member')
@@ -151,7 +152,6 @@ class ReservasiResource extends Resource
                 ])
                 ->columns(1),
 
-            // ===== Row: Nama Pemesan | No Telepon =====
             Grid::make([
                 'default' => 1,
                 'md' => 2,
@@ -175,6 +175,9 @@ class ReservasiResource extends Resource
                 ->label('Waktu Check In')
                 ->required()
                 ->reactive()
+                ->helperText(fn($state) => $state
+                    ? 'Hari: ' . Carbon::parse($state)->locale('id')->isoFormat('dddd')
+                    : null)
                 ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc) {
                     $hari = static::deriveHariTipe($get('waktu_check_in'), $get('waktu_check_out'));
                     $set('hari_tipe', $hari);
@@ -187,6 +190,9 @@ class ReservasiResource extends Resource
                 ->required()
                 ->rule('after:waktu_check_in')
                 ->reactive()
+                ->helperText(fn($state) => $state
+                    ? 'Hari: ' . Carbon::parse($state)->locale('id')->isoFormat('dddd')
+                    : null)
                 ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc) {
                     $hari = static::deriveHariTipe($get('waktu_check_in'), $get('waktu_check_out'));
                     $set('hari_tipe', $hari);
@@ -206,87 +212,126 @@ class ReservasiResource extends Resource
             Hidden::make('id_pic_ioc')->default(fn() => (Auth::check() && Auth::user()?->role_id === 5) ? Auth::id() : null),
             Hidden::make('id_pic_utc')->default(fn() => (Auth::check() && Auth::user()?->role_id === 7) ? Auth::id() : null),
 
-            // ---------- FASILITAS ----------
             Section::make('Fasilitas')
                 ->description('Harga otomatis menyesuaikan Weekday/Weekend di rentang tanggal.')
                 ->schema([
-                    Group::make()->schema(function (\Filament\Forms\Get $get) use ($recalc) {
-                        $jenis = $get('jenis_member') ?? 'Internal';
-                        $groups = static::fasilitasGroupedByNamaForMember($jenis);
-                        $selected = (array) ($get('fasilitas_selected') ?? []);
+                    Group::make()
+                        ->schema(function (\Filament\Forms\Get $get) use ($recalc) {
+                            $jenis = $get('jenis_member') ?? 'Internal';
+                            $groups = static::fasilitasGroupedByNamaForMember($jenis);
+                            $selected = (array) ($get('fasilitas_selected') ?? []);
 
-                        // daftar per kategori -> [label di UI => groupKey (lowercase)]
-                        $HALL = [
-                            'Multifunction Hall' => 'multifunction hall',
-                            'Hall A/B' => 'hall a/b',
-                            'Hall A+B' => 'hall a+b',
-                            'Welirang Room' => 'welirang room',
-                            'Cinnamon Executive Meeting Room' => 'cinnamon executive meeting room',
-                            'Arjuna Room' => 'arjuna room',
-                            'Pendapa Pawitra' => 'pendapa pawitra',
-                        ];
-                        $COTTAGE = [
-                            'Albizia Cottage' => 'albizia cottage',
-                            'Bamboo Cottage' => 'bamboo cottage',
-                            'Coffee Cottage' => 'coffee cottage',
-                            'Avocado Cottage' => 'avocado cottage',
-                            'Banana Cottage' => 'banana cottage',
-                            'Cassava Cottage' => 'cassava cottage',
-                            'Durian Cottage' => 'durian cottage',
-                        ];
-                        $VIP = [
-                            'VIP Cottage - Asparagus' => 'vip cottage - asparagus',
-                            'VIP Cottage - Brocolli' => 'vip cottage - brocolli',
-                            'VIP Cottage - Celery' => 'vip cottage - celery',
-                            'VIP Cottage - Eucalyptus' => 'vip cottage - eucalyptus',
-                            'VIP Cottage - Fennel' => 'vip cottage - fennel',
-                            'VIP Cottage - Ginger' => 'vip cottage - ginger',
-                            'VIP Cottage - Kiwi' => 'vip cottage - kiwi',
-                            'VIP Cottage - Lemon' => 'vip cottage - lemon',
-                            'VIP Cottage - Mango' => 'vip cottage - mango',
-                            'VIP Cottage - Papaya' => 'vip cottage - papaya',
-                            'VIP Cottage - Tomato' => 'vip cottage - tomato',
-                            'VIP Cottage - Salacca' => 'vip cottage - salacca',
-                        ];
-                        $OTHERS = [
-                            'Camping Ground' => 'camping ground',
-                            'Camping + Tenda' => 'camping + tenda',
-                            'Driver Room' => 'driver room',
-                        ];
+                            $HALL = [
+                                'Multifunction Hall' => 'multifunction hall',
+                                'Hall A/B' => 'hall a/b',
+                                'Hall A+B' => 'hall a+b',
+                                'Welirang Room' => 'welirang room',
+                                'Cinnamon Executive Meeting Room' => 'cinnamon executive meeting room',
+                                'Arjuna Room' => 'arjuna room',
+                                'Pendapa Pawitra' => 'pendapa pawitra',
+                            ];
+                            $COTTAGE = [
+                                'Albizia Cottage' => 'albizia cottage',
+                                'Bamboo Cottage' => 'bamboo cottage',
+                                'Coffee Cottage' => 'coffee cottage',
+                                'Avocado Cottage' => 'avocado cottage',
+                                'Banana Cottage' => 'banana cottage',
+                                'Cassava Cottage' => 'cassava cottage',
+                                'Durian Cottage' => 'durian cottage',
+                            ];
+                            $VIP = [
+                                'VIP Cottage - Asparagus' => 'vip cottage - asparagus',
+                                'VIP Cottage - Brocolli' => 'vip cottage - brocolli',
+                                'VIP Cottage - Celery' => 'vip cottage - celery',
+                                'VIP Cottage - Eucalyptus' => 'vip cottage - eucalyptus',
+                                'VIP Cottage - Fennel' => 'vip cottage - fennel',
+                                'VIP Cottage - Ginger' => 'vip cottage - ginger',
+                                'VIP Cottage - Kiwi' => 'vip cottage - kiwi',
+                                'VIP Cottage - Lemon' => 'vip cottage - lemon',
+                                'VIP Cottage - Mango' => 'vip cottage - mango',
+                                'VIP Cottage - Papaya' => 'vip cottage - papaya',
+                                'VIP Cottage - Tomato' => 'vip cottage - tomato',
+                                'VIP Cottage - Salacca' => 'vip cottage - salacca',
+                            ];
 
-                        // builder untuk 1 box kategori
-                        $buildBox = function (string $title, array $items) use ($groups, $selected, $recalc) {
-                            $rows = [];
-                            foreach ($items as $label => $key) {
-                                if (!isset($groups[$key])) {
-                                    // kalau item tidak ada untuk jenis_member ini, skip
-                                    continue;
+                            $OTHERS = [
+                                'Camping Ground' => 'camping ground',
+                                'Camping + Tenda' => 'camping + tenda',
+                                'Driver Room' => 'driver room',
+                            ];
+
+                            $buildBox = function (string $title, array $items) use ($groups, $selected, $recalc) {
+                                $rows = [];
+                                foreach ($items as $label => $key) {
+                                    if (!isset($groups[$key])) {
+                                        continue;
+                                    }
+                                    $rows[] = static::facilityRow($key, $label, $selected, $recalc);
                                 }
-                                $rows[] = static::facilityRow($key, $label, $selected, $recalc);
-                            }
-                            if (empty($rows))
-                                return null;
+                                if (empty($rows))
+                                    return null;
 
-                            return \Filament\Forms\Components\Section::make($title)
-                                ->schema($rows)
-                                ->columns(1)
-                                ->collapsible(); // opsional
-                        };
+                                return \Filament\Forms\Components\Section::make($title)
+                                    ->schema($rows)
+                                    ->columns(1)
+                                    ->collapsible();
+                            };
 
-                        $boxes = array_filter([
-                            $buildBox('HALL', $HALL),
-                            $buildBox('COTTAGE', $COTTAGE),
-                            $buildBox('VIP COTTAGE', $VIP),
-                            $buildBox('OTHERS', $OTHERS),
-                        ]);
+                            $boxes = array_filter([
+                                $buildBox('HALL', $HALL),
+                                $buildBox('COTTAGE', $COTTAGE),
+                                $buildBox('VIP COTTAGE', $VIP),
+                                $buildBox('OTHERS', $OTHERS),
+                            ]);
 
-                        return array_values($boxes);
-                    }),
+                            $selectedKeys = array_keys(array_filter((array) $get('fasilitas_selected')));
+                            $perPerson = ['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'];
+                            $showJumlah = count(array_intersect($selectedKeys, $perPerson)) > 0;
+
+
+                            // kembalikan box + field jumlah_orang di bawahnya
+                            return array_merge(array_values($boxes));
+                        })
+                        ->live(),
                 ])
                 ->columns(1),
 
+            TextInput::make('jumlah_orang')
+                ->label('Jumlah Orang')
+                ->numeric()
+                ->minValue(1)
+                ->default(1)
+                ->dehydrated(false)
+                ->helperText('Dipakai untuk Avocado, Banana, Durian, Cassava (harga per orang).')
+                ->visible(function (Get $get) {
+                    $sel = (array) $get('fasilitas_selected');   // ambil seluruh array
+                    foreach (['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'] as $k) {
+                        if (!empty($sel[$k]))
+                            return true;       // cek boolean dari key-key tersebut
+                    }
+                    return false;
+                })
+                ->live()
+                ->reactive()
+                ->afterStateUpdated(function ($state, Set $set, Get $get) use ($recalc) {
+                    if ((int) $state < 1)
+                        $set('jumlah_orang', 1);
+                    $recalc($get, $set);
+                })
+                ->afterStateHydrated(function ($state, Set $set, Get $get, $record) {
+                    if ($state || !$record)
+                        return;
+                    $perPerson = ['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'];
+                    $qty = method_exists($record, 'items')
+                        ? (int) $record->items()->whereIn('cottage_slug', $perPerson)->sum('qty')
+                        : 0;
+                    if ($qty <= 0) {
+                        $qty = max(1, (int) $record->jumlah_laki + (int) $record->jumlah_perempuan);
+                    }
+                    $set('jumlah_orang', $qty);
+                }),
 
-            // ---------- ADDITIONAL ----------
+
             Section::make('Additional')
                 ->schema([
                     Group::make()
@@ -354,7 +399,6 @@ class ReservasiResource extends Resource
                 ])
                 ->columns(1),
 
-            // ---------- MENU MAKAN ----------
             Section::make('Menu Makan')
                 ->schema([
                     Group::make()
@@ -460,7 +504,6 @@ class ReservasiResource extends Resource
                     ->action(function (Reservasi $record) {
                         $data = static::sanitizeData($record->fresh()->toArray());
 
-                        // Render Blade → paksa UTF-8 → loadHTML
                         $html = view('reservasi.pdf', ['reservasi' => $data])->render();
                         $html = static::sanitizeHtml($html);
 
@@ -543,15 +586,12 @@ class ReservasiResource extends Resource
     {
         return [
             'index' => Pages\ListReservasis::route('/'),
-            // Tambahkan ini kalau kamu pakai halaman create:
-            // 'create' => Pages\CreateReservasi::route('/create'),
             'edit' => Pages\EditReservasi::route('/{record}/edit'),
         ];
     }
 
     public static function syncPivotsFromFormState(Reservasi $record, array $state): void
     {
-        // -------- FASILITAS --------
         $fSelected = array_filter($state['fasilitas_selected'] ?? []);
         $fMulai = $state['fasilitas_mulai'] ?? [];
         $fSelesai = $state['fasilitas_selesai'] ?? [];
@@ -566,7 +606,6 @@ class ReservasiResource extends Resource
 
             $fid = $groups[$groupKey]['id_canonical'] ?? null;
 
-            // FIX: jangan kirim id kosong/null/0
             if (!$fid || (int) $fid <= 0) {
                 continue;
             }
@@ -579,7 +618,6 @@ class ReservasiResource extends Resource
 
         $record->fasilitas()->sync($fSync);
 
-        // -------- ADDITIONAL --------
         $aSelected = array_filter($state['additional_selected'] ?? []);
         $aMulai = $state['additional_mulai'] ?? [];
         $aSelesai = $state['additional_selesai'] ?? [];
@@ -596,7 +634,6 @@ class ReservasiResource extends Resource
 
         $record->additional()->sync($aSync);
 
-        // -------- MENU MAKAN --------
         $mSelected = array_filter($state['menu_makan_selected'] ?? []);
         $mJumlah = $state['menu_makan_jumlah'] ?? [];
         $mSync = [];
@@ -610,8 +647,6 @@ class ReservasiResource extends Resource
 
         $record->menuMakan()->sync($mSync);
     }
-
-    // ===== Helpers =====
 
     protected static function deriveHariTipe(?string $checkIn, ?string $checkOut): ?string
     {
@@ -748,7 +783,6 @@ class ReservasiResource extends Resource
         return $groups;
     }
 
-    // === DIBUAT PUBLIC supaya bisa dipanggil dari Pages ===
     public static function hitungTotalHarga(
         array $fSelected,
         array $fMulai,
@@ -761,11 +795,13 @@ class ReservasiResource extends Resource
         int $diskonPersen,
         ?string $jenisUser = null,
         ?string $checkIn = null,
-        ?string $checkOut = null
+        ?string $checkOut = null,
+        ?int $jumlahOrang = null
     ): int {
         $subtotal = 0;
+        $perPersonKeys = ['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'];
+        $jumlahOrang = max(1, (int) ($jumlahOrang ?? 1));
 
-        // FASILITAS
         if ($jenisUser) {
             $groups = static::fasilitasGroupedByNamaForMember($jenisUser);
             foreach ($fSelected as $key => $on) {
@@ -776,12 +812,15 @@ class ReservasiResource extends Resource
                     continue;
 
                 $split = static::hitungSplitPerRange($fMulai[$key] ?? null, $fSelesai[$key] ?? null);
-                $subtotal += ($split['weekday'] * (int) ($g['harga_weekday'] ?? 0))
+                $base = ($split['weekday'] * (int) ($g['harga_weekday'] ?? 0))
                     + ($split['weekend'] * (int) ($g['harga_weekend'] ?? 0));
+
+                $mult = in_array($key, $perPersonKeys, true) ? $jumlahOrang : 1;
+
+                $subtotal += $mult * $base;
             }
         }
 
-        // ADDITIONAL (per-hari; kalau “sekali pakai” ganti $hari -> min(1, $hari))
         foreach ($aSelected as $id => $on) {
             if (!$on)
                 continue;
@@ -792,7 +831,6 @@ class ReservasiResource extends Resource
             }
         }
 
-        // MENU MAKAN (default pakai global check-in/out)
         $hariReservasi = static::hitungSplitPerRange($checkIn, $checkOut);
         $hariTotal = max(1, $hariReservasi['weekday'] + $hariReservasi['weekend']);
         foreach (array_keys(array_filter($menuSelected)) as $mid) {
@@ -802,14 +840,12 @@ class ReservasiResource extends Resource
             }
         }
 
-        // Diskon
         $diskon = max(0, min(100, (int) $diskonPersen));
         $subtotal -= (int) round($subtotal * ($diskon / 100));
 
         return max(0, (int) $subtotal);
     }
 
-    // Ambil tanggal booked untuk 1 fasilitas-id
     protected static function bookedDatesForFacility(int $facilityId, ?int $excludeReservasiId = null): array
     {
         $cacheKey = $facilityId . '|' . ($excludeReservasiId ?: 0);
@@ -840,10 +876,9 @@ class ReservasiResource extends Resource
         return static::$bookedDateCache[$cacheKey] = array_values(array_unique($dates));
     }
 
-    // Disabled dates untuk 1 group fasilitas (gabungkan semua id_list)
     protected static function disabledDatesForGroup(string $groupKey, \Filament\Forms\Get $get): array
     {
-        $ids = static::facilityIdsByGroupKey($groupKey); // <- semua varian ID untuk fasilitas itu
+        $ids = static::facilityIdsByGroupKey($groupKey);
         if (empty($ids))
             return [];
 
@@ -856,13 +891,11 @@ class ReservasiResource extends Resource
         return array_values(array_unique($all));
     }
 
-
-    // Kumpulkan semua ID fasilitas yang secara fisik sama (nama sama), lintas Internal/Eksternal & Weekday/Weekend
     protected static function facilityIdsByGroupKey(string $groupKey): array
     {
         return \App\Models\Fasilitas::query()
             ->where('status', 'Available')
-            ->whereRaw('LOWER(nama) = ?', [$groupKey]) // $groupKey = strtolower(nama)
+            ->whereRaw('LOWER(nama) = ?', [$groupKey])
             ->pluck('id')
             ->map(fn($v) => (int) $v)
             ->all();
@@ -874,6 +907,7 @@ class ReservasiResource extends Resource
             \Filament\Forms\Components\Checkbox::make("fasilitas_selected.$groupKey")
                 ->label($label)
                 ->reactive()
+                ->live()
                 ->afterStateHydrated(function (\Filament\Forms\Components\Checkbox $c) use ($groupKey, $selectedMap) {
                     $c->state((bool) ($selectedMap[$groupKey] ?? false));
                 })
@@ -887,7 +921,7 @@ class ReservasiResource extends Resource
 
             \Filament\Forms\Components\DateTimePicker::make("fasilitas_mulai.$groupKey")
                 ->label('Mulai')
-                ->native(false) // wajib agar disabledDates berfungsi
+                ->native(false)
                 ->minDate(fn(\Filament\Forms\Get $get) => $get('waktu_check_in'))
                 ->maxDate(fn(\Filament\Forms\Get $get) => $get('waktu_check_out'))
                 ->disabledDates(fn(\Filament\Forms\Get $get) => static::disabledDatesForGroup($groupKey, $get))
