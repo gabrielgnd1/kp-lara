@@ -38,7 +38,16 @@ class UserResource extends Resource
                 ->unique(ignoreRecord: true),
             Forms\Components\TextInput::make('password')
                 ->password()
-                ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
+                ->revealable()
+                ->dehydrateStateUsing(function ($state, $record) {
+                    // Only hash if the password is being changed by the user (not plain text from admin reset)
+                    if ($record && $record->password === $state) {
+                        // Password is still plain text, do not hash
+                        return $state;
+                    }
+                    // Password is being changed, hash it
+                    return filled($state) ? Hash::make($state) : $state;
+                })
                 ->dehydrated(fn (?string $state): bool => filled($state))
                 ->required(fn (string $operation): bool => $operation === 'create'),
             Forms\Components\Select::make('id_role')
@@ -99,12 +108,8 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 

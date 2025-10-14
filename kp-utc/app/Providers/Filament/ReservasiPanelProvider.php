@@ -52,7 +52,7 @@ class ReservasiPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                \App\Http\Middleware\ReservasiPanelAuthenticate::class,
             ]);
     }
 }

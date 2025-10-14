@@ -80,4 +80,6 @@ class ListReservasis extends ListRecords
                 }),
         ];
     }
+
+    // Removed getTableQuery override. All reservations will be shown for all roles.
 }

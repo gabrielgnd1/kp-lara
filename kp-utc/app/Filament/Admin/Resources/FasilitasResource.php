@@ -14,7 +14,7 @@ class FasilitasResource extends Resource
 {
     protected static ?string $model = Fasilitas::class;
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
-    protected static ?string $navigationGroup = 'Facility Management';
+    protected static ?string $navigationGroup = 'Reservation Management';
     protected static ?string $navigationLabel = 'Manage Facilities';
 
     public static function form(Form $form): Form
@@ -135,12 +135,8 @@ class FasilitasResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 

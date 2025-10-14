@@ -37,6 +37,7 @@ class Login extends Component
                 1 => 'admin',
                 2 => 'reservasi',
                 3 => 'lapangan',
+                4 => 'reservasi', // Allow role 4 to access reservasi panel too
             ];
 
             if (isset($rolePanels[$user->id_role])) {

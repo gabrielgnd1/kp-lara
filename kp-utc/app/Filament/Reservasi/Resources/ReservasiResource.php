@@ -46,6 +46,22 @@ class ReservasiResource extends Resource
         return 'Reservasi';
     }
 
+    // Mutate data before create: set id_pic_utc, id_pic_ioc, status_reservasi based on user role
+    public static function mutateFormDataBeforeCreate(array $data): array
+    {
+        $user = auth()->user();
+        if ($user->id_role == 2) {
+            $data['id_pic_utc'] = $user->id;
+            $data['id_pic_ioc'] = null;
+            $data['status_reservasi'] = 'ACC';
+        } elseif ($user->id_role == 4) {
+            $data['id_pic_ioc'] = $user->id;
+            $data['id_pic_utc'] = null;
+            $data['status_reservasi'] = 'NOT ACC';
+        }
+        return $data;
+    }
+
     protected static function configurePdfOptions()
     {
         return [
@@ -302,40 +318,7 @@ class ReservasiResource extends Resource
                 ])
                 ->columns(1),
 
-            TextInput::make('jumlah_orang')
-                ->label('Jumlah Orang')
-                ->numeric()
-                ->minValue(1)
-                ->default(1)
-                ->dehydrated(false)
-                ->helperText('Dipakai untuk Avocado, Banana, Durian, Cassava (harga per orang).')
-                ->visible(function (Get $get) {
-                    $sel = (array) $get('fasilitas_selected');   // ambil seluruh array
-                    foreach (['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'] as $k) {
-                        if (!empty($sel[$k]))
-                            return true;       // cek boolean dari key-key tersebut
-                    }
-                    return false;
-                })
-                ->live()
-                ->reactive()
-                ->afterStateUpdated(function ($state, Set $set, Get $get) use ($recalc) {
-                    if ((int) $state < 1)
-                        $set('jumlah_orang', 1);
-                    $recalc($get, $set);
-                })
-                ->afterStateHydrated(function ($state, Set $set, Get $get, $record) {
-                    if ($state || !$record)
-                        return;
-                    $perPerson = ['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'];
-                    $qty = method_exists($record, 'items')
-                        ? (int) $record->items()->whereIn('cottage_slug', $perPerson)->sum('qty')
-                        : 0;
-                    if ($qty <= 0) {
-                        $qty = max(1, (int) $record->jumlah_laki + (int) $record->jumlah_perempuan);
-                    }
-                    $set('jumlah_orang', $qty);
-                }),
+            // ...jumlah_orang textbox removed as requested...
 
 
             Section::make('Additional')
@@ -472,6 +455,7 @@ class ReservasiResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // Show all reservations for all users (no filter by status_reservasi)
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nama_pemesan')
@@ -527,6 +511,21 @@ class ReservasiResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('accept')
+                    ->label('Terima')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn ($record) => auth()->user()?->id_role == 2 && $record->status_reservasi === 'NOT ACC')
+                    ->action(function ($record) {
+                        $record->id_pic_utc = auth()->id();
+                        $record->status_reservasi = 'ACC';
+                        $record->save();
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading('Terima Reservasi')
+                    ->modalDescription('Apakah Anda yakin ingin menerima reservasi ini?')
+                    ->modalSubmitActionLabel('Ya, Terima')
+                    ->successNotificationTitle('Reservasi berhasil diterima'),
                 Tables\Actions\Action::make('view_detail')
                     ->label('View Detail')
                     ->url(fn (Reservasi $record): string => route('reservasi.detail', ['id' => $record->id]))

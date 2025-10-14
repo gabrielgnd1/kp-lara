@@ -65,6 +65,23 @@ class AdminReservasiResource extends Resource
         return ['nama_pemesan', 'email', 'no_telepon', 'judul_kegiatan'];
     }
 
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $user = auth()->user();
+        
+        if ($user->role === 'Admin UTC') {
+            $data['id_pic_utc'] = $user->id;
+            $data['id_pic_ioc'] = null;
+            $data['status_reservasi'] = 'ACC';
+        } elseif ($user->role === 'Admin IOC') {
+            $data['id_pic_ioc'] = $user->id;
+            $data['id_pic_utc'] = null;
+            $data['status_reservasi'] = 'NOT ACC';
+        }
+        
+        return $data;
+    }
+
     public static function form(Form $form): Form
     {
         $recalc = function (Get $get, callable $set) {
@@ -200,7 +217,17 @@ class AdminReservasiResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $user = auth()->user();
+        
         return $table
+            ->modifyQueryUsing(function (Builder $query) use ($user) {
+                if ($user->role === 'Admin UTC') {
+                    // Show all reservations for Admin UTC
+                    return $query;
+                }
+                // For other roles, show their own reservations
+                return $query;
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('nama_pemesan')
                     ->label('Nama Pemesan')
@@ -290,6 +317,25 @@ class AdminReservasiResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('accept')
+                    ->label('Terima')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn ($record) => 
+                        auth()->user()->role === 'Admin UTC' && 
+                        $record->status_reservasi === 'NOT ACC'
+                    )
+                    ->action(function ($record) {
+                        $record->update([
+                            'status_reservasi' => 'ACC',
+                            'id_pic_utc' => auth()->id(),
+                        ]);
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading('Terima Reservasi')
+                    ->modalDescription('Apakah Anda yakin ingin menerima reservasi ini?')
+                    ->modalSubmitActionLabel('Ya, Terima')
+                    ->successNotificationTitle('Reservasi berhasil diterima'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

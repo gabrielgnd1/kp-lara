@@ -8,9 +8,24 @@ use Illuminate\Notifications\Notifiable;
 use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 use Filament\Panel;
 
+
+
 class User extends Authenticatable implements FilamentUserContract
 {
     use HasFactory, Notifiable;
+
+    /**
+     * Override the setPasswordAttribute to hash only if not already hashed.
+     */
+    public function setPasswordAttribute($value)
+    {
+        // If the value is already a bcrypt hash, don't hash again
+        if (strlen($value) === 60 && preg_match('/^\$2[ayb]\$.{56}$/', $value)) {
+            $this->attributes['password'] = $value;
+        } else {
+            $this->attributes['password'] = bcrypt($value);
+        }
+    }
 
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
     //karena nama file User & nama table bukan users jadi hrs dideklarasi
@@ -46,13 +61,7 @@ class User extends Authenticatable implements FilamentUserContract
         //  'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        //bikin password ke hash otomatis pake bcrypt
-        return [
-            'password' => 'hashed',
-        ];
-    }
+
 
       public function canAccessPanel(Panel $panel): bool
         {
