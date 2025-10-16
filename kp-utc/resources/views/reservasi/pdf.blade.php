@@ -6,7 +6,14 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Reservasi</title>
+    @vite(['resources/css/app.css'])
     <style>
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        
         @font-face {
             font-family: 'DejaVu Sans';
             src: url("{{ storage_path('fonts/DejaVuSans.ttf') }}") format("truetype");
@@ -352,9 +359,14 @@
     </style>
 </head>
 <body>
+        <div class="flex justify-between items-center mb-4 no-print">
+        <div></div>
+        <x-print-button />
+    </div>
+
     <div class="header">
         <h1>Detail Reservasi</h1>
-        <div class="subtitle">Generated on {{ now()->format('d F Y, H:i') }}</div>
+        <div class="subtitle">Unit Training Center Petrokimia Gresik</div>
     </div>
 
     @if(isset($reservasi_list))
