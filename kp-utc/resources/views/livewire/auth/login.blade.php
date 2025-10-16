@@ -38,18 +38,13 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between">
+                <div class="flex items-center">
                     <div class="flex items-center">
                         <input id="remember" type="checkbox" wire:model.defer="remember"
                                class="h-4 w-4 rounded border-[#A8DE30]/40 text-[#A8DE30] focus:ring-[#A8DE30]/20 transition-colors" />
                         <label for="remember" class="ml-3 block text-sm leading-6 text-[#31312C]">
                             Remember me
                         </label>
-                    </div>
-                    <div class="text-sm">
-                        <a href="{{ route('password.request') }}" class="font-medium text-[#493852] hover:text-[#493852]/80 transition-colors">
-                            Forgot password?
-                        </a>
                     </div>
                 </div>
 

@@ -18,4 +18,3 @@ Route::get('/register', RegisterComponent::class)->name('register');
 
 Route::get('/home', Home::class)->middleware('auth')->name('home');
 
-
