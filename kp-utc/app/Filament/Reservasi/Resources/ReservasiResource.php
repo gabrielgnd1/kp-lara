@@ -490,8 +490,8 @@ class ReservasiResource extends Resource
                     ->label('Status Reservasi')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'ACC' => 'warning',
-                        'NOT ACC' => 'warning',
+                        'ACC' => 'success',
+                        'NOT ACC' => 'danger',
                         'CANCELLED' => 'danger',
                     }),
                 Tables\Columns\TextColumn::make('status_pembayaran')

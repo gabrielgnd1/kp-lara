@@ -15,11 +15,13 @@ return [
     */
 
     'colors' => [
-        'primary' => '#0B5D3B',   // hijau tua
-        'success' => '#7BB542',   // hijau terang
-        'warning' => '#D4AF37',   // emas
-        'danger'  => '#dc2626',   // merah default (boleh biarin aja)
-        'info'    => '#2563eb',   // biru default
+        'primary' => '#A8DE30',   // Main green
+        'secondary' => '#493852', // Purple
+        'success' => '#A8DE30',   // Main green
+        'warning' => '#D4AF37',   // Gold (kept for warnings)
+        'danger'  => '#dc2626',   // Red (kept for errors)
+        'info'    => '#493852',   // Purple for info
+        'gray' => '#31312C',      // Black for gray shades
     ],
 
     /*

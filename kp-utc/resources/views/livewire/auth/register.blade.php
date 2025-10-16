@@ -1,99 +1,95 @@
 @section('title', 'Create a new account')
 
-<div>
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <a href="{{ route('home') }}">
-            <x-logo class="w-auto h-16 mx-auto text-indigo-600" />
-        </a>
+<div class="flex min-h-screen items-center justify-center py-12">
+    <div class="w-screen max-w-md">
+        <div class="space-y-8 px-6 py-12 bg-white shadow-xl rounded-xl sm:px-12 sm:py-16 border border-[#A8DE30]/20">
+            <div class="text-center">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-16 w-auto mx-auto">
+                <h2 class="mt-6 text-2xl font-bold tracking-tight text-[#31312C]">
+                    Create a new account
+                </h2>
+                <p class="mt-2 text-sm text-[#493852]/80">
+                    Already have an account?
+                    <a href="{{ route('login') }}" class="font-medium text-[#493852] hover:text-[#493852]/80 transition-colors">
+                        Sign in
+                    </a>
+                </p>
+            </div>
 
-        <h2 class="mt-6 text-3xl font-extrabold text-center text-gray-900 leading-9">
-            Create a new account
-        </h2>
+            <form wire:submit.prevent="register" class="mt-8 space-y-6">
+                <div class="space-y-4">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-[#31312C]">
+                            Username
+                        </label>
+                        <div class="mt-2">
+                            <input wire:model.lazy="username" id="username" type="text" required autofocus
+                                   class="block w-full rounded-lg border border-[#A8DE30]/20 py-2 px-3 bg-white text-[#31312C] shadow-sm ring-0 placeholder:text-gray-400 focus:border-[#A8DE30] focus:ring-2 focus:ring-[#A8DE30]/20 transition-colors sm:text-sm sm:leading-6" />
+                            @error('username')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
 
-        <p class="mt-2 text-sm text-center text-gray-600 leading-5 max-w">
-            Or
-            <a href="{{ route('login') }}" class="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:underline transition ease-in-out duration-150">
-                sign in to your account
-            </a>
-        </p>
-    </div>
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-[#31312C]">
+                            Full Name
+                        </label>
+                        <div class="mt-2">
+                            <input wire:model.lazy="name" id="name" type="text" required 
+                                   class="block w-full rounded-lg border border-[#A8DE30]/20 py-2 px-3 bg-white text-[#31312C] shadow-sm ring-0 placeholder:text-gray-400 focus:border-[#A8DE30] focus:ring-2 focus:ring-[#A8DE30]/20 transition-colors sm:text-sm sm:leading-6" />
+                            @error('name')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="px-4 py-8 bg-white shadow sm:rounded-lg sm:px-10">
-            <form wire:submit.prevent="register">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-[#31312C]">
+                            Email
+                        </label>
+                        <div class="mt-2">
+                            <input wire:model.lazy="email" id="email" type="email" required
+                                   class="block w-full rounded-lg border border-[#A8DE30]/20 py-2 px-3 bg-white text-[#31312C] shadow-sm ring-0 placeholder:text-gray-400 focus:border-[#A8DE30] focus:ring-2 focus:ring-[#A8DE30]/20 transition-colors sm:text-sm sm:leading-6" />
+                            @error('email')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-[#31312C]">
+                            Password
+                        </label>
+                        <div class="mt-2">
+                            <input wire:model.lazy="password" id="password" type="password" required
+                                   class="block w-full rounded-lg border border-[#A8DE30]/20 py-2 px-3 bg-white text-[#31312C] shadow-sm ring-0 placeholder:text-gray-400 focus:border-[#A8DE30] focus:ring-2 focus:ring-[#A8DE30]/20 transition-colors sm:text-sm sm:leading-6" />
+                            @error('password')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="password_confirmation" class="block text-sm font-medium text-[#31312C]">
+                            Confirm Password
+                        </label>
+                        <div class="mt-2">
+                            <input wire:model.lazy="password_confirmation" id="password_confirmation" type="password" required
+                                   class="block w-full rounded-lg border border-[#A8DE30]/20 py-2 px-3 bg-white text-[#31312C] shadow-sm ring-0 placeholder:text-gray-400 focus:border-[#A8DE30] focus:ring-2 focus:ring-[#A8DE30]/20 transition-colors sm:text-sm sm:leading-6" />
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 leading-5">
-                        Username
-                    </label>
-
-                    <div class="mt-1 rounded-md shadow-sm">
-                        <input wire:model.lazy="username" id="username" type="text" required autofocus class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5 @error('username') border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror">
-                    </div>
-
-                    @error('username')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                    <button type="submit"
+                            class="flex w-full justify-center rounded-lg bg-[#A8DE30] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#A8DE30]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A8DE30] transition-colors">
+                        Create Account
+                    </button>
                 </div>
 
-                <!-- class mt-6 ini buat nambah <br> sama atasnya -->
-                <div class="mt-6">
-                    <label for="name" class="block text-sm font-medium text-gray-700 leading-5">
-                        Name
-                    </label>
-
-                    <div class="mt-1 rounded-md shadow-sm">
-                        <input wire:model.lazy="name" id="name" type="text" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5 @error('name') border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
-                    </div>
-
-                    @error('name')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="mt-6">
-                    <label for="email" class="block text-sm font-medium text-gray-700 leading-5">
-                        Email address
-                    </label>
-
-                    <div class="mt-1 rounded-md shadow-sm">
-                        <input wire:model.lazy="email" id="email" type="email" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5 @error('email') border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
-                    </div>
-
-                    @error('email')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="mt-6">
-                    <label for="password" class="block text-sm font-medium text-gray-700 leading-5">
-                        Password
-                    </label>
-
-                    <div class="mt-1 rounded-md shadow-sm">
-                        <input wire:model.lazy="password" id="password" type="password" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5 @error('password') border-red-300 text-red-900 placeholder-red-300 focus:border-red-300 focus:ring-red @enderror" />
-                    </div>
-
-                    @error('password')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="mt-6">
-                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 leading-5">
-                        Confirm Password
-                    </label>
-
-                    <div class="mt-1 rounded-md shadow-sm">
-                        <input wire:model.lazy="passwordConfirmation" id="password_confirmation" type="password" required class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 appearance-none rounded-md focus:outline-none focus:ring-blue focus:border-blue-300 transition duration-150 ease-in-out sm:text-sm sm:leading-5" />
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <span class="block w-full rounded-md shadow-sm">
-                        <button type="submit" class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-500 focus:outline-none focus:border-indigo-700 focus:ring-indigo active:bg-indigo-700 transition duration-150 ease-in-out">
-                            Register
-                        </button>
-                    </span>
+                <div class="text-center text-sm text-[#31312C]/40">
+                    By registering, you agree to our Terms of Service and Privacy Policy.
                 </div>
             </form>
         </div>

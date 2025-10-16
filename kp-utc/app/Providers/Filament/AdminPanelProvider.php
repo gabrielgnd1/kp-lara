@@ -29,7 +29,47 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->homeUrl(fn () => route('filament.admin.pages.dashboard'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => [
+                    50 => '#F5FBF0',
+                    100 => '#EBF7E2',
+                    200 => '#D5F0B8',
+                    300 => '#B7E585',
+                    400 => '#A8DE30', // Main green
+                    500 => '#97C82B',
+                    600 => '#7EA724',
+                    700 => '#65861D',
+                    800 => '#4C6416',
+                    900 => '#32430F',
+                    950 => '#192107',
+                ],
+                'gray' => [
+                    50 => '#F9F9F9',
+                    100 => '#F3F3F2',
+                    200 => '#E6E6E5',
+                    300 => '#CDCDCB',
+                    400 => '#9A9A98',
+                    500 => '#737371',
+                    600 => '#565654',
+                    700 => '#454543',
+                    800 => '#31312C', // Main black
+                    900 => '#252521',
+                    950 => '#171715',
+                ],
+                'warning' => Color::Amber, // Keep amber for warnings
+                'danger' => Color::Rose,   // Keep rose for errors
+                'info' => [                // Purple for info
+                    50 => '#F4F2F5',
+                    100 => '#E6E2EC',
+                    200 => '#D5CDD9',
+                    300 => '#B6A8BC',
+                    400 => '#867091',
+                    500 => '#493852', // Main purple
+                    600 => '#42324A',
+                    700 => '#372A3E',
+                    800 => '#2C2131',
+                    900 => '#211925',
+                    950 => '#161119',
+                ],
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')

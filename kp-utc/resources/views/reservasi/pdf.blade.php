@@ -19,42 +19,134 @@
             src: url("{{ storage_path('fonts/DejaVuSans.ttf') }}") format("truetype");
         }
         
+        :root {
+            --color-green: #A8DE30;
+            --color-black: #31312C;
+            --color-white: #FFFFFF;
+            --color-purple: #493852;
+        }
+        
         * {
             font-family: 'DejaVu Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            margin: 20px;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
+            background-color: var(--color-white);
+            color: var(--color-black);
+            line-height: 1.6;
+            font-size: 16px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 1rem;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 640px) {
+            .container {
+                padding: 2rem;
+                max-width: 90%;
+            }
         }
         
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
+            margin-bottom: 2rem;
+            padding: 2rem 1rem;
+            background-color: var(--color-green);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .header h1 {
-            color: #333;
+            color: var(--color-white);
             margin: 0;
-            font-size: 24px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
         
         .header .subtitle {
-            color: #666;
-            margin-top: 5px;
+            color: var(--color-black);
+            margin-top: 0.5rem;
+            font-size: 1rem;
         }
         
-        .reservasi-item {
-            margin-bottom: 30px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: white;
-            page-break-inside: avoid;
+        .content {
+            background: var(--color-white);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(168, 222, 48, 0.05);
+            border-radius: 1rem;
+            border: 1px solid rgba(168, 222, 48, 0.1);
+        }
+
+        .section-title {
+            color: var(--color-purple);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .info-label {
+            color: var(--color-purple);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: var(--color-black);
+            font-size: 1rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background: var(--color-green);
+            color: var(--color-white);
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(168, 222, 48, 0.2);
+            margin: 2rem 0;
+        }
         }
         
         .info-grid {
@@ -359,15 +451,17 @@
     </style>
 </head>
 <body>
-        <div class="flex justify-between items-center mb-4 no-print">
-        <div></div>
-        <x-print-button />
-    </div>
+        <div class="container">
+        <div class="flex justify-end mb-6 no-print">
+            <x-print-button />
+        </div>
 
-    <div class="header">
-        <h1>Detail Reservasi</h1>
-        <div class="subtitle">Unit Training Center Petrokimia Gresik</div>
-    </div>
+        <div class="header">
+            <h1>Detail Reservasi</h1>
+            <div class="subtitle">Unit Training Center Petrokimia Gresik</div>
+        </div>
+
+        <div class="content bg-white rounded-2xl p-6 shadow-lg border border-[#A8DE30]/20">
 
     @if(isset($reservasi_list))
     <div class="summary-box">
