@@ -49,7 +49,7 @@ class ReservasiResource extends Resource
     // Mutate data before create: set id_pic_utc, id_pic_ioc, status_reservasi based on user role
     public static function mutateFormDataBeforeCreate(array $data): array
     {
-        $user = auth()->user();
+        $user = Auth::user();
         if ($user->id_role == 2) {
             $data['id_pic_utc'] = $user->id;
             $data['id_pic_ioc'] = null;
@@ -515,9 +515,9 @@ class ReservasiResource extends Resource
                     ->label('Terima')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => auth()->user()?->id_role == 2 && $record->status_reservasi === 'NOT ACC')
+                    ->visible(fn ($record) => Auth::user()?->id_role == 2 && $record->status_reservasi === 'NOT ACC')
                     ->action(function ($record) {
-                        $record->id_pic_utc = auth()->id();
+                        $record->id_pic_utc = Auth::id();
                         $record->status_reservasi = 'ACC';
                         $record->save();
                     })

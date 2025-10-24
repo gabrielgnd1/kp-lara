@@ -11,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Grid;
@@ -67,7 +68,7 @@ class AdminReservasiResource extends Resource
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $user = auth()->user();
+        $user = Auth::user();
         
         if ($user->role === 'Admin UTC') {
             $data['id_pic_utc'] = $user->id;
@@ -217,7 +218,7 @@ class AdminReservasiResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $user = auth()->user();
+        $user = Auth::user();
         
         return $table
             ->modifyQueryUsing(function (Builder $query) use ($user) {
@@ -322,13 +323,13 @@ class AdminReservasiResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn ($record) => 
-                        auth()->user()->role === 'Admin UTC' && 
+                        Auth::user()->role === 'Admin UTC' && 
                         $record->status_reservasi === 'NOT ACC'
                     )
                     ->action(function ($record) {
                         $record->update([
                             'status_reservasi' => 'ACC',
-                            'id_pic_utc' => auth()->id(),
+                            'id_pic_utc' => Auth::id(),
                         ]);
                     })
                     ->requiresConfirmation()

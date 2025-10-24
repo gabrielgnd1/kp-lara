@@ -147,7 +147,7 @@
             background: rgba(168, 222, 48, 0.2);
             margin: 2rem 0;
         }
-        }
+        
         
         .info-grid {
             display: table;

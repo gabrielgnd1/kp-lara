@@ -10,6 +10,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Facades\Filament;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class Login extends BaseLogin
 {
@@ -17,7 +18,7 @@ class Login extends BaseLogin
     {
         parent::mount();
 
-        if (auth()->check() && auth()->user()->id_role !== 1) {
+        if (Auth::check() && Auth::user()->id_role !== 1) {
             abort(403, 'Unauthorized. Admin access required.');
         }
     }

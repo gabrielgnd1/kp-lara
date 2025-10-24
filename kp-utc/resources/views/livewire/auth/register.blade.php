@@ -4,7 +4,7 @@
     <div class="w-screen max-w-md">
         <div class="space-y-8 px-6 py-12 bg-white shadow-xl rounded-xl sm:px-12 sm:py-16 border border-[#A8DE30]/20">
             <div class="text-center">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-16 w-auto mx-auto">
+                <img src="{{ asset('images/ioc_utc_upc.png') }}" alt="Logo" class="h-16 w-auto mx-auto">
                 <h2 class="mt-6 text-2xl font-bold tracking-tight text-[#31312C]">
                     Create a new account
                 </h2>

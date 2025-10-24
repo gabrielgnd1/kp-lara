@@ -21,7 +21,7 @@ $sizes = [
     'lg' => 'px-6 py-3 text-base',
 ];
 
-$classes = $baseClasses . ' ' . $variants[$variant] . ' ' . $sizes[$size] . ($disabled ? ' opacity-50 cursor-not-allowed' : '');
+$classes = $baseClasses . ' ' . ($variants[$variant] ?? $variants['primary']) . ' ' . ($sizes[$size] ?? $sizes['md']) . ($disabled ? ' opacity-50 cursor-not-allowed' : '');
 @endphp
 
 <button

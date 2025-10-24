@@ -11,7 +11,7 @@ $variants = [
     'danger' => 'bg-red-100 text-red-800',
 ];
 
-$classes = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' . $variants[$variant];
+$classes = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' . ($variants[$variant] ?? $variants['primary']);
 @endphp
 
 <span {{ $attributes->merge(['class' => $classes]) }}>
