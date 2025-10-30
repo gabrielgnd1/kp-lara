@@ -128,6 +128,12 @@ class AdminLaporanResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('discussion')
+                    ->label('💬 Diskusi')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('info')
+                    ->url(fn (Laporan $record) => route('discussion.show', $record->id))
+                    ->openUrlInNewTab(false),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
             ])
@@ -151,6 +157,7 @@ class AdminLaporanResource extends Resource
             'index' => Pages\ListAdminLaporans::route('/'),
             'create' => Pages\CreateAdminLaporan::route('/create'),
             'edit' => Pages\EditAdminLaporan::route('/{record}/edit'),
+            'discussion' => Pages\DiscussionAdminLaporan::route('/{record}/discussion'),
         ];
     }
 }

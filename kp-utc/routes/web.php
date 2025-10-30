@@ -3,9 +3,12 @@
 use App\Livewire\Auth\Login as LoginComponent;
 use App\Livewire\Auth\Register as RegisterComponent;
 use App\Livewire\Home;
+use App\Livewire\LaporanList;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservasiController;
 use App\Http\Controllers\ReservasiViewController;
+use App\Http\Controllers\DiskusiLaporanController;
+use App\Http\Controllers\DiscussionViewController;
 
 // Public routes
 Route::get('/', fn () => redirect('/login')); // redirect root ke login
@@ -17,6 +20,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservasi/pdf', [ReservasiController::class, 'printPdf']);
     Route::get('/reservasi/{id}', [ReservasiViewController::class, 'show'])->name('reservasi.detail');
     Route::get('/home', Home::class)->name('home');
+    
+    // Laporan and Discussion Routes
+    Route::get('/laporan', LaporanList::class)->name('laporan.list');
+    Route::get('/laporan/{laporanId}/discussion', [DiscussionViewController::class, 'show'])->name('discussion.show');
+    Route::post('/discussion/store', [DiscussionViewController::class, 'store'])->name('diskusi.store');
+    
+    // API routes for discussions
+    Route::get('/api/diskusi/{laporanId}', [DiskusiLaporanController::class, 'getDiscussions'])->name('diskusi.get');
+    Route::delete('/api/diskusi/{diskusiId}', [DiskusiLaporanController::class, 'destroy'])->name('diskusi.delete');
 });
 
 Route::post('/logout', function () {

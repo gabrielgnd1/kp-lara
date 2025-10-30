@@ -9,6 +9,7 @@ class DiskusiLaporan extends Model
     //laravel itu otomatis ngira kalau nama table itu bentuk jamak dari nama file modelnya
     //karena nama file DiskusiLaporan & nama table bukan diskusilaporans jadi hrs dideklarasi
     protected $table = 'diskusi_laporan';
+    public $timestamps = true;
 
     //ini isi smua atribut selain primary key
     protected $fillable = [

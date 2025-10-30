@@ -92,7 +92,8 @@ class LaporanResource extends Resource
 
             TextColumn::make('nama_laporan')
                 ->weight('bold')
-                ->label('Nama'),
+                ->label('Nama')
+                ->searchable(),
 
             TextColumn::make('tanggal_lapor')
                 ->label('Tanggal')
@@ -119,8 +120,16 @@ class LaporanResource extends Resource
         ])
         ->paginated()
         ->striped(false)
-        ->actions([]) // hide edit/delete tombol default
-        ->bulkActions([]);//
+        ->recordUrl(fn (Laporan $record) => static::getUrl('discussion', ['record' => $record]))
+        ->actions([
+            Tables\Actions\Action::make('discussion')
+                ->label('💬 Diskusi')
+                ->icon('heroicon-o-chat-bubble-left-right')
+                ->color('info')
+                ->url(fn (Laporan $record) => route('discussion.show', $record->id))
+                ->openUrlInNewTab(false),
+        ])
+        ->bulkActions([]);
 }
 
     public static function getRelations(): array
@@ -139,7 +148,7 @@ class LaporanResource extends Resource
             'index' => Pages\ListLaporans::route('/'),
             'create' => Pages\CreateLaporan::route('/create'),
             'edit' => Pages\EditLaporan::route('/{record}/edit'),
-            
+            'discussion' => Pages\DiscussionLaporan::route('/{record}/discussion'),
         ];
     }
 }
