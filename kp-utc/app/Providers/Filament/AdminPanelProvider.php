@@ -28,6 +28,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->homeUrl(fn () => route('filament.admin.pages.dashboard'))
+            ->brandLogo(asset('images/ioc_utc_upc.png'))
+            ->brandLogoHeight('2rem')
+            ->favicon(asset('images/ioc_utc_upc.png'))
             ->colors([
                 'primary' => [
                     50 => '#F5FBF0',
@@ -75,6 +78,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->pages([
                 \App\Filament\Admin\Pages\Dashboard::class,
+                \App\Filament\Admin\Pages\EditProfile::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([

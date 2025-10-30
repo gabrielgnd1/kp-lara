@@ -13,9 +13,6 @@
 
                 <!-- Main Navigation -->
                 <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                    <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium {{ request()->routeIs('home') ? 'text-[#A8DE30] border-b-2 border-[#A8DE30]' : 'text-[#31312C] hover:text-[#A8DE30] border-b-2 border-transparent' }}">
-                        Dashboard
-                    </a>
                 </div>
             </div>
 
@@ -46,12 +43,6 @@
                     </div>
                 @else
                     <div class="space-x-4">
-                        <a href="{{ route('login') }}" class="text-[#31312C] hover:text-[#A8DE30] transition-colors">
-                            Log in
-                        </a>
-                        <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-[#A8DE30] hover:bg-[#A8DE30]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A8DE30]/20 transition-colors">
-                            Register
-                        </a>
                     </div>
                 @endauth
             </div>
@@ -98,9 +89,6 @@
             <div class="pt-4 pb-3 border-t border-[#A8DE30]/10 space-y-1">
                 <a href="{{ route('login') }}" class="block px-4 py-2 text-base text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 transition-colors">
                     Log in
-                </a>
-                <a href="{{ route('register') }}" class="block px-4 py-2 text-base text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 transition-colors">
-                    Register
                 </a>
             </div>
         @endauth

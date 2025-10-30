@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="text-center text-sm text-[#31312C]/40">
-                    © {{ date('Y') }} — Unit Training Center Petrokimia Gresik
+                    © {{ date('Y') }} — UBAYA Training Center
                 </div>
             </form>
         </div>

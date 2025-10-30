@@ -27,6 +27,9 @@ class LapanganPanelProvider extends PanelProvider
             //->login()
             ->id('lapangan')
             ->path('lapangan')
+            ->brandLogo(asset('images/ioc_utc_upc.png'))
+            ->brandLogoHeight('2rem')
+            ->favicon(asset('images/ioc_utc_upc.png'))
             ->colors([
                 'primary' => [
                     50 => '#F5FBF0',
@@ -73,7 +76,8 @@ class LapanganPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Lapangan/Resources'), for: 'App\\Filament\\Lapangan\\Resources')
             ->discoverPages(in: app_path('Filament/Lapangan/Pages'), for: 'App\\Filament\\Lapangan\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Lapangan\Pages\Dashboard::class,
+                \App\Filament\Lapangan\Pages\EditProfile::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Lapangan/Widgets'), for: 'App\\Filament\\Lapangan\\Widgets')
             ->widgets([

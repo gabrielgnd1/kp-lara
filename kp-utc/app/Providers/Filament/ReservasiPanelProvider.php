@@ -24,9 +24,11 @@ class ReservasiPanelProvider extends PanelProvider
     {
         return $panel
             ->homeUrl(fn () => route('filament.reservasi.pages.dashboard'))
-            
             ->id('reservasi')
             ->path('reservasi')
+            ->brandLogo(asset('images/ioc_utc_upc.png'))
+            ->brandLogoHeight('2rem')
+            ->favicon(asset('images/ioc_utc_upc.png'))
             ->colors([
                 'primary' => [
                     50 => '#F5FBF0',
@@ -73,6 +75,7 @@ class ReservasiPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Reservasi/Resources'), for: 'App\\Filament\\Reservasi\\Resources')
             ->pages([
                 \App\Filament\Reservasi\Pages\Dashboard::class,
+                \App\Filament\Reservasi\Pages\EditProfile::class,
             ])
             ->discoverPages(in: app_path('Filament/Reservasi/Pages'), for: 'App\\Filament\\Reservasi\\Pages')
             ->discoverWidgets(in: app_path('Filament/Reservasi/Widgets'), for: 'App\\Filament\\Reservasi\\Widgets')

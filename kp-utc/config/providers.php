@@ -44,6 +44,7 @@ return [
         \App\Providers\AuthServiceProvider::class,
         \App\Providers\RouteServiceProvider::class,
         \App\Providers\Filament\AdminPanelProvider::class,
+        \App\Providers\Filament\ReservasiPanelProvider::class,
         \App\Providers\FilamentLanguageServiceProvider::class,
     ],
 ];
