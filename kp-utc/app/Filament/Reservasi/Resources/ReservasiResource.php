@@ -22,15 +22,12 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\HtmlString;
 
 class ReservasiResource extends Resource
 {
@@ -62,21 +59,6 @@ class ReservasiResource extends Resource
             $data['id_pic_utc'] = null;
             $data['status_reservasi'] = 'NOT ACC';
         }
-        return $data;
-    }
-
-    // Mutate data before save: update status_pembayaran berdasarkan pilihan tipe_pembayaran
-    public static function mutateFormDataBeforeSave(array $data): array
-    {
-        // Update status_pembayaran sesuai pilihan radio button tipe_pembayaran
-        if (!empty($data['tipe_pembayaran'])) {
-            if ($data['tipe_pembayaran'] === 'DP') {
-                $data['status_pembayaran'] = 'DP';
-            } elseif ($data['tipe_pembayaran'] === 'LUNAS') {
-                $data['status_pembayaran'] = 'LUNAS';
-            }
-        }
-        
         return $data;
     }
 
@@ -160,9 +142,6 @@ class ReservasiResource extends Resource
         return $form->schema([
             Hidden::make('form_ready')
                 ->default(true)
-                ->dehydrated(false),
-
-            Hidden::make('_record_id')
                 ->dehydrated(false),
 
             Hidden::make('fasilitas_selected')->default([])->dehydrated(false),
@@ -742,60 +721,7 @@ class ReservasiResource extends Resource
                         }
 
                         $recordsArray = $records->sortBy('waktu_check_in')->map(function ($record) {
-                            // Load relationships for this record
-                            $record = $record->load('fasilitas', 'additional', 'menuMakan', 'pic_utc');
-                            $data = static::sanitizeData($record->toArray());
-                            
-                            // Add admin user name if available
-                            if ($record->pic_utc) {
-                                $data['pic_utc_name'] = $record->pic_utc->name ?? '';
-                            }
-                            
-                            // Add currently logged-in user name
-                            if (auth()->check()) {
-                                $data['current_user_name'] = auth()->user()->name ?? '';
-                            }
-                            
-                            // Transform facilities array to include fasilitas details
-                            if (isset($data['fasilitas'])) {
-                                $data['pemesanan_fasilitas'] = array_map(function($fasilitas) {
-                                    return [
-                                        'nama_fasilitas' => $fasilitas['nama'] ?? '',
-                                        'mulai' => $fasilitas['pivot']['mulai'] ?? null,
-                                        'selesai' => $fasilitas['pivot']['selesai'] ?? null,
-                                        'jumlah_orang' => $fasilitas['pivot']['jumlah_orang'] ?? null,
-                                        'harga' => $fasilitas['harga'] ?? 0,
-                                    ];
-                                }, $data['fasilitas']);
-                                unset($data['fasilitas']);
-                            }
-                            
-                            // Transform additional array
-                            if (isset($data['additional'])) {
-                                $data['pemesanan_additional'] = array_map(function($additional) {
-                                    return [
-                                        'nama' => $additional['nama'] ?? '',
-                                        'mulai' => $additional['pivot']['mulai'] ?? null,
-                                        'selesai' => $additional['pivot']['selesai'] ?? null,
-                                        'harga' => $additional['pivot']['harga'] ?? 0,
-                                    ];
-                                }, $data['additional']);
-                                unset($data['additional']);
-                            }
-                            
-                            // Transform menu array
-                            if (isset($data['menu_makan'])) {
-                                $data['pemesanan_menu_makan'] = array_map(function($menu) {
-                                    return [
-                                        'nama' => $menu['nama'] ?? '',
-                                        'jumlah' => $menu['pivot']['jumlah'] ?? 1,
-                                        'harga' => $menu['harga'] ?? 0,
-                                    ];
-                                }, $data['menu_makan']);
-                                unset($data['menu_makan']);
-                            }
-                            
-                            return $data;
+                            return static::sanitizeData($record->toArray());
                         })->toArray();
 
                         $viewData = [
@@ -840,12 +766,10 @@ class ReservasiResource extends Resource
         $fSelected = array_filter($state['fasilitas_selected'] ?? []);
         $fMulai = $state['fasilitas_mulai'] ?? [];
         $fSelesai = $state['fasilitas_selesai'] ?? [];
-        $fJumlahOrang = $state['fasilitas_jumlah_orang'] ?? [];
         $fSync = [];
 
         $jenis = $state['jenis_member'] ?? 'Internal';
         $groups = static::fasilitasGroupedByNamaForMember($jenis);
-        $perPersonCottages = ['avocado cottage', 'banana cottage', 'cassava cottage', 'durian cottage'];
 
         foreach (array_keys($fSelected) as $groupKey) {
             if (!isset($groups[$groupKey]))
@@ -857,17 +781,10 @@ class ReservasiResource extends Resource
                 continue;
             }
 
-            $pivotData = [
+            $fSync[(int) $fid] = [
                 'mulai' => $fMulai[$groupKey] ?? null,
                 'selesai' => $fSelesai[$groupKey] ?? null,
             ];
-
-            // Only add jumlah_orang for per-person cottages
-            if (in_array($groupKey, $perPersonCottages, true)) {
-                $pivotData['jumlah_orang'] = max(1, (int) ($fJumlahOrang[$groupKey] ?? 1));
-            }
-
-            $fSync[(int) $fid] = $pivotData;
         }
 
         $record->fasilitas()->sync($fSync);
@@ -964,7 +881,7 @@ class ReservasiResource extends Resource
             $end = Carbon::parse($checkOut)->startOfDay();
 
             if ($end->lessThanOrEqualTo($start)) {
-                if ($start->isFriday() ||$start->isSasilurday() || $start->isSunday())
+                if ($start->isSaturday() || $start->isSunday())
                     $weekend = 1;
                 else
                     $weekday = 1;
@@ -972,7 +889,7 @@ class ReservasiResource extends Resource
             }
 
             foreach (CarbonPeriod::create($start, $end->copy()->subDay()) as $d) {
-                if ($d->isFriday() | $d->isSaturday() || $d->isSunday())
+                if ($d->isSaturday() || $d->isSunday())
                     $weekend++;
                 else
                     $weekday++;
@@ -1091,8 +1008,7 @@ class ReservasiResource extends Resource
         foreach (array_keys(array_filter($menuSelected)) as $mid) {
             if ($menu = MenuMakan::find((int) $mid)) {
                 $qty = max(1, (int) ($menuJumlah[$mid] ?? 1));
-                // Menu makan hanya dihitung harga × jumlah, BUKAN × hari
-                $subtotal += (int) $menu->harga * $qty;
+                $subtotal += (int) $menu->harga * $qty * $hariTotal;
             }
         }
 
@@ -1138,13 +1054,7 @@ class ReservasiResource extends Resource
         if (empty($ids))
             return [];
 
-        // Get current reservasi ID from the route
-        $currentId = null;
-        $routeRecord = request()->route('record') ?? null;
-        
-        if ($routeRecord) {
-            $currentId = is_numeric($routeRecord) ? (int) $routeRecord : $routeRecord->id;
-        }
+        $currentId = (int) (request()->route('record') ?? 0) ?: null;
 
         $all = [];
         foreach ($ids as $fid) {
@@ -1200,19 +1110,8 @@ class ReservasiResource extends Resource
                         $start = \Carbon\Carbon::parse($value)->startOfDay();
                         $endRaw = $get("fasilitas_selesai.$groupKey");
                         $end = $endRaw ? \Carbon\Carbon::parse($endRaw)->startOfDay() : $start->copy()->addDay();
-                        
-                        // Get current reservasi ID from form state
-                        $currentId = (int) ($get('_record_id') ?? 0) ?: null;
-                        
-                        $ids = \App\Filament\Reservasi\Resources\ReservasiResource::facilityIdsByGroupKey($groupKey);
-                        $blockedDates = [];
-                        foreach ($ids as $fid) {
-                            $blockedDates = array_merge(
-                                $blockedDates,
-                                \App\Filament\Reservasi\Resources\ReservasiResource::bookedDatesForFacility($fid, $currentId)
-                            );
-                        }
-                        $set = array_flip($blockedDates);
+                        $blocked = \App\Filament\Reservasi\Resources\ReservasiResource::disabledDatesForGroup($groupKey, $get);
+                        $set = array_flip($blocked);
                         foreach (\Carbon\CarbonPeriod::create($start, $end->copy()->subDay()) as $d) {
                             if (isset($set[$d->format('Y-m-d')])) {
                                 $fail('Rentang tanggal fasilitas bentrok.');
@@ -1246,19 +1145,8 @@ class ReservasiResource extends Resource
                         $start = \Carbon\Carbon::parse($startRaw)->startOfDay();
                         if ($end->lessThanOrEqualTo($start))
                             $fail('Selesai harus > Mulai.');
-                        
-                        // Get current reservasi ID from form state
-                        $currentId = (int) ($get('_record_id') ?? 0) ?: null;
-                        
-                        $ids = \App\Filament\Reservasi\Resources\ReservasiResource::facilityIdsByGroupKey($groupKey);
-                        $blockedDates = [];
-                        foreach ($ids as $fid) {
-                            $blockedDates = array_merge(
-                                $blockedDates,
-                                \App\Filament\Reservasi\Resources\ReservasiResource::bookedDatesForFacility($fid, $currentId)
-                            );
-                        }
-                        $set = array_flip($blockedDates);
+                        $blocked = \App\Filament\Reservasi\Resources\ReservasiResource::disabledDatesForGroup($groupKey, $get);
+                        $set = array_flip($blocked);
                         foreach (\Carbon\CarbonPeriod::create($start, $end->copy()->subDay()) as $d) {
                             if (isset($set[$d->format('Y-m-d')])) {
                                 $fail('Rentang tanggal fasilitas bentrok.');

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
@@ -458,7 +458,11 @@
 
         <div class="header">
             <h1>Detail Reservasi</h1>
+<<<<<<< HEAD
             <div class="subtitle">UBAYA Training Center</div>
+=======
+            <div class="subtitle">Unit Training Center Petrokimia Gresik</div>
+>>>>>>> parent of 2ae9fb2 (reservasi ALMOST done)
         </div>
 
         <div class="content bg-white rounded-2xl p-6 shadow-lg border border-[#A8DE30]/20">

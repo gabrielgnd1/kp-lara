@@ -37,3 +37,4 @@ Route::post('/logout', function () {
 })->name('logout');
 
 Route::get('/home', Home::class)->middleware('auth')->name('home');
+
