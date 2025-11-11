@@ -13,8 +13,7 @@ class PemesananFasilitas extends Model
         'reservasi_id',
         'fasilitas_id', // <-- must be fasilitas_id, not cottage_id
         'mulai',
-        'selesai',
-        'jumlah_orang'
+        'selesai'
     ];
 
     protected $casts = [

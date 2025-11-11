@@ -489,8 +489,7 @@ class ReservasiResource extends Resource
                         ->directory('reservasi/bukti-pembayaran')
                         ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
                         ->maxSize(5120)
-                        ->preserveFilenames()
-                        ->visible(fn(Get $get) => $get('tipe_pembayaran') === 'DP' || $get('tipe_pembayaran') === 'LUNAS'),
+                        ->preserveFilenames(),
 
                     Radio::make('tipe_pembayaran')
                         ->label('Tipe Pembayaran')

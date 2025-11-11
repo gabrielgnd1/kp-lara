@@ -48,22 +48,17 @@ class EditReservasi extends EditRecord
     {
         $record = $this->record->loadMissing(['fasilitas', 'additional', 'menuMakan']);
 
-        // Store record ID for validation purposes
-        $data['_record_id'] = $this->record->id;
-
         $data['diskon'] = $data['diskon'] ?? (int) ($this->record->diskon ?? 0);
 
         // ------- FASILITAS (pakai groupKey = strtolower(nama)) -------
         $data['fasilitas_selected'] = [];
         $data['fasilitas_mulai'] = [];
         $data['fasilitas_selesai'] = [];
-        $data['fasilitas_jumlah_orang'] = [];
         foreach ($record->fasilitas as $f) {
             $groupKey = trim(mb_strtolower($f->nama));
             $data['fasilitas_selected'][$groupKey] = true;
             $data['fasilitas_mulai'][$groupKey] = $f->pivot->mulai ?? $data['waktu_check_in'] ?? null;
             $data['fasilitas_selesai'][$groupKey] = $f->pivot->selesai ?? $data['waktu_check_out'] ?? null;
-            $data['fasilitas_jumlah_orang'][$groupKey] = (int) ($f->pivot->jumlah_orang ?? 1);
         }
 
         // ------- ADDITIONAL (key = id) -------
@@ -104,7 +99,6 @@ class EditReservasi extends EditRecord
         $fSel = (array) ($state['fasilitas_selected'] ?? []);
         $fMul = (array) ($state['fasilitas_mulai'] ?? []);
         $fSelis = (array) ($state['fasilitas_selesai'] ?? []);
-        $fJml = (array) ($state['fasilitas_jumlah_orang'] ?? []);
 
         $aSel = (array) ($state['additional_selected'] ?? []);
         $aMul = (array) ($state['additional_mulai'] ?? []);
@@ -130,8 +124,7 @@ class EditReservasi extends EditRecord
             $disk,
             $jenis,
             $cin,
-            $cout,
-            $fJml
+            $cout
         );
 
         // Buang mirror fields agar tidak disimpan ke kolom non-eksis
@@ -139,14 +132,12 @@ class EditReservasi extends EditRecord
             $data['fasilitas_selected'],
             $data['fasilitas_mulai'],
             $data['fasilitas_selesai'],
-            $data['fasilitas_jumlah_orang'],
             $data['additional_selected'],
             $data['additional_mulai'],
             $data['additional_selesai'],
             $data['menu_makan_selected'],
             $data['menu_makan_jumlah'],
-            $data['hari_tipe'],
-            $data['_record_id']
+            $data['hari_tipe']
         );
 
         return $data;

@@ -19,7 +19,6 @@ class Reservasi extends Model
         'jumlah_laki','jumlah_perempuan','informasi_tambahan',
         'diskon', 'harga_akhir',
         'status_pembayaran','tanggal_dibuat',
-        'file_reservation_form','file_bukti_dp','file_bukti_lunas','tipe_pembayaran',
         // intentionally exclude: status_reservasi, id_pic_ioc, id_pic_utc
     ];
 
@@ -116,7 +115,7 @@ class Reservasi extends Model
             'pemesanan_fasilitas',
             'reservasi_id',
             'fasilitas_id'
-        )->withPivot(['mulai','selesai','jumlah_orang']);
+        )->withPivot(['mulai','selesai']);
     }
 
     public function additional()

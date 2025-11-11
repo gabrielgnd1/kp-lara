@@ -129,7 +129,7 @@ class AdminLaporanResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('discussion')
-                    ->label('💬 Diskusi')
+                    ->label('Diskusi')
                     ->icon('heroicon-o-chat-bubble-left-right')
                     ->color('info')
                     ->url(fn (Laporan $record) => route('discussion.show', $record->id))

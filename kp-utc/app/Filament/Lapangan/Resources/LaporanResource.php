@@ -123,7 +123,7 @@ class LaporanResource extends Resource
         ->recordUrl(fn (Laporan $record) => static::getUrl('discussion', ['record' => $record]))
         ->actions([
             Tables\Actions\Action::make('discussion')
-                ->label('💬 Diskusi')
+                ->label('Diskusi')
                 ->icon('heroicon-o-chat-bubble-left-right')
                 ->color('info')
                 ->url(fn (Laporan $record) => route('discussion.show', $record->id))
