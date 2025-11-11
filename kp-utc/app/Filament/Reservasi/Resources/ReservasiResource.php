@@ -24,6 +24,9 @@ use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Illuminate\Support\HtmlString;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -35,6 +38,7 @@ class ReservasiResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationLabel = 'Detail Reservasi';
     protected static array $bookedDateCache = [];
+    public static ?int $currentEditingReservasiId = null;
 
     public static function getModelLabel(): string
     {
@@ -140,6 +144,10 @@ class ReservasiResource extends Resource
         };
 
         return $form->schema([
+            Hidden::make('reservasi_id_edit')
+                ->default(null)
+                ->dehydrated(false),
+                
             Hidden::make('form_ready')
                 ->default(true)
                 ->dehydrated(false),
@@ -449,160 +457,99 @@ class ReservasiResource extends Resource
                 ->readOnly()
                 ->dehydrated(true),
 
-            // STATUS BARU: Upload reservation form + bukti DP + pilih tipe pembayaran
-            Section::make('Dokumen Pembayaran')
-                ->description('Upload dokumen yang diperlukan untuk konfirmasi pembayaran')
-                ->visible(fn(Get $get) => $get('status_pembayaran') === 'BARU' || !$get('status_pembayaran'))
+            // SECTION 1: Dokumen Pembayaran (Upload & Pilih tipe pembayaran)
+            Section::make('💳 Dokumen Pembayaran')
+                ->description('Upload dokumen dan pilih tipe pembayaran')
                 ->schema([
+                    // BARU: Upload Reservation Form (hidden, simpan ke dokumen_reservasi)
                     FileUpload::make('file_reservation_form')
-                        ->label('Upload Reservation Form')
+                        ->label('Upload Reservation Form (Wajib)')
                         ->disk('public')
                         ->directory('reservasi/forms')
                         ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
                         ->maxSize(5120)
-                        ->preserveFilenames(),
-
-                    FileUpload::make('file_bukti_dp')
-                        ->label('Upload Bukti Pembayaran DP')
-                        ->disk('public')
-                        ->directory('reservasi/bukti-pembayaran')
-                        ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
-                        ->maxSize(5120)
-                        ->preserveFilenames(),
-
-                    Radio::make('tipe_pembayaran')
-                        ->label('Tipe Pembayaran')
-                        ->options([
-                            'DP' => 'DP 30%)',
-                            'LUNAS' => 'LUNAS',
-                        ])
-                        ->required(fn(Get $get) => $get('file_reservation_form'))
-                        ->reactive()
+                        ->preserveFilenames()
                         ->dehydrated(true)
-                        ->visible(fn(Get $get) => $get('status_pembayaran') === 'BARU' || !$get('status_pembayaran')),
+                        ->nullable()
+                        ->required(fn(Get $get) => $get('status_pembayaran') === 'BARU' || !$get('status_pembayaran'))
+                        ->hidden(), // Hidden tapi tetap bisa terima data
 
-                    // Upload bukti lunas hanya jika pilih LUNAS di status BARU
-                    FileUpload::make('file_bukti_lunas')
-                        ->label('Upload Bukti Pembayaran Lunas')
-                        ->disk('public')
-                        ->directory('reservasi/bukti-pembayaran')
-                        ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
-                        ->maxSize(5120)
-                        ->preserveFilenames()
-                        ->visible(fn(Get $get) => $get('tipe_pembayaran') === 'LUNAS'),
-                ]),
-
-            // STATUS DP: Tampilkan file lama + pilih untuk lanjut ke LUNAS dengan upload bukti lunas
-            Section::make('Konfirmasi Pembayaran Lanjutan')
-                ->description('Upload bukti pembayaran lunas untuk melengkapi pembayaran')
-                ->visible(fn(Get $get) => $get('status_pembayaran') === 'DP')
-                ->schema([
-                    Placeholder::make('res_form_dp')
-                        ->label('Reservation Form')
-                        ->content(function(Get $get) {
-                            $file = $get('file_reservation_form');
-                            if ($file) {
-                                if (is_array($file)) {
-                                    $file = $file[0] ?? null;
-                                }
-                                if ($file) {
-                                    $url = asset('storage/' . $file);
-                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"text-blue-500 hover:underline\">📥 Download File</a>");
-                                }
-                            }
-                            return '❌ Tidak ada file';
-                        }),
-
-                    Placeholder::make('bukti_dp_dp')
-                        ->label('Bukti Pembayaran DP')
-                        ->content(function(Get $get) {
-                            $file = $get('file_bukti_dp');
-                            if ($file) {
-                                if (is_array($file)) {
-                                    $file = $file[0] ?? null;
-                                }
-                                if ($file) {
-                                    $url = asset('storage/' . $file);
-                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"text-blue-500 hover:underline\">📥 Download File</a>");
-                                }
-                            }
-                            return '❌ Tidak ada file';
-                        }),
-
-                    Radio::make('tipe_pembayaran_dp')
-                        ->label('Lanjutkan dengan Pembayaran')
+                    // Radio Tipe Pembayaran (SELALU TAMPIL, bind ke status_pembayaran)
+                    Radio::make('status_pembayaran')
+                        ->label('Pilih Tipe Pembayaran')
                         ->options([
-                            'DP' => 'Tetap DP',
-                            'LUNAS' => 'Upgrade ke LUNAS',
+                            'DP' => 'DP 30% + Upgrade Lunas Nanti',
+                            'LUNAS' => 'LUNAS (Bayar Penuh Sekarang)',
                         ])
-                        ->default(fn(Get $get) => $get('tipe_pembayaran'))
+                        ->dehydrated(true)
+                        ->required(fn(Get $get) => !$get('status_pembayaran') || $get('status_pembayaran') === 'BARU')
                         ->reactive()
-                        ->dehydrated(false)
-                        ->visible(fn(Get $get) => $get('status_pembayaran') === 'DP')
-                        ->afterStateUpdated(fn(Set $set, $state) => $set('tipe_pembayaran', $state)),
+                        ->live(),
 
-                    FileUpload::make('file_bukti_lunas_dp')
-                        ->label('Upload Bukti Pembayaran Lunas')
+                    // BARU + DP: Upload Bukti DP (hidden, simpan ke dokumen_reservasi)
+                    FileUpload::make('file_bukti_dp')
+                        ->label('Upload Bukti Pembayaran DP (Wajib)')
                         ->disk('public')
                         ->directory('reservasi/bukti-pembayaran')
                         ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
                         ->maxSize(5120)
                         ->preserveFilenames()
-                        ->visible(fn(Get $get) => $get('tipe_pembayaran_dp') === 'LUNAS')
-                        ->afterStateUpdated(fn(Set $set, $state) => $set('file_bukti_lunas', $state)),
+                        ->dehydrated(true)
+                        ->nullable()
+                        ->required(fn(Get $get) => $get('status_pembayaran') === 'DP')
+                        ->hidden(), // Hidden tapi tetap bisa terima data
+
+                    // BARU + LUNAS: Upload Bukti Lunas (hidden, simpan ke dokumen_reservasi)
+                    FileUpload::make('file_bukti_lunas')
+                        ->label('Upload Bukti Pembayaran Lunas (Wajib)')
+                        ->disk('public')
+                        ->directory('reservasi/bukti-pembayaran')
+                        ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
+                        ->maxSize(5120)
+                        ->preserveFilenames()
+                        ->dehydrated(true)
+                        ->nullable()
+                        ->required(fn(Get $get) => $get('status_pembayaran') === 'LUNAS')
+                        ->hidden(), // Hidden tapi tetap bisa terima data
                 ]),
 
-            Section::make('Dokumen Pembayaran Lengkap')
-                ->description('Semua dokumen pembayaran')
-                ->visible(fn(Get $get) => $get('status_pembayaran') === 'LUNAS')
+            // SECTION: Ringkasan Dokumen (View-only, display data dari database)
+            Section::make('📂 Ringkasan Dokumen')
+                ->description('Semua file dokumen yang telah diupload')
                 ->schema([
-                    Placeholder::make('reservation_form_link_lunas')
-                        ->label('Reservation Form')
-                        ->content(function(Get $get) {
-                            $file = $get('file_reservation_form');
-                            if ($file) {
-                                if (is_array($file)) {
-                                    $file = $file[0] ?? null;
-                                }
-                                if ($file) {
-                                    $url = asset('storage/' . $file);
-                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"text-blue-500 hover:underline\">📥 Download File</a>");
-                                }
-                            }
-                            return '❌ Tidak ada file';
-                        }),
+                    Group::make()
+                        ->schema([
+                            Placeholder::make('doc_form')
+                                ->label('📋 Reservation Form')
+                                ->content(function($record) {
+                                    if (!$record || !$record->file_reservation_form) {
+                                        return '❌ Tidak ada file';
+                                    }
+                                    $url = asset('storage/' . $record->file_reservation_form);
+                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"inline-flex items-center gap-2 px-4 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium\">📥 Download Reservation Form</a>");
+                                }),
 
-                    Placeholder::make('bukti_dp_link_lunas')
-                        ->label('Bukti Pembayaran DP')
-                        ->content(function(Get $get) {
-                            $file = $get('file_bukti_dp');
-                            if ($file) {
-                                if (is_array($file)) {
-                                    $file = $file[0] ?? null;
-                                }
-                                if ($file) {
-                                    $url = asset('storage/' . $file);
-                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"text-blue-500 hover:underline\">📥 Download File</a>");
-                                }
-                            }
-                            return '❌ Tidak ada file';
-                        }),
+                            Placeholder::make('doc_dp')
+                                ->label('💳 Bukti Pembayaran DP')
+                                ->content(function($record) {
+                                    if (!$record || !$record->file_bukti_dp) {
+                                        return '❌ Tidak ada file';
+                                    }
+                                    $url = asset('storage/' . $record->file_bukti_dp);
+                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"inline-flex items-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium\">📥 Download Bukti DP</a>");
+                                }),
 
-                    Placeholder::make('bukti_lunas_link')
-                        ->label('Bukti Pembayaran Lunas')
-                        ->content(function(Get $get) {
-                            $file = $get('file_bukti_lunas');
-                            if ($file) {
-                                if (is_array($file)) {
-                                    $file = $file[0] ?? null;
-                                }
-                                if ($file) {
-                                    $url = asset('storage/' . $file);
-                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"text-blue-500 hover:underline\">📥 Download File</a>");
-                                }
-                            }
-                            return '❌ Tidak ada file';
-                        }),
+                            Placeholder::make('doc_lunas')
+                                ->label('✅ Bukti Pembayaran Lunas')
+                                ->content(function($record) {
+                                    if (!$record || !$record->file_bukti_lunas) {
+                                        return '❌ Tidak ada file';
+                                    }
+                                    $url = asset('storage/' . $record->file_bukti_lunas);
+                                    return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"inline-flex items-center gap-2 px-4 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium\">📥 Download Bukti Lunas</a>");
+                                }),
+                        ])
+                        ->columns(1),
                 ]),
 
             DateTimePicker::make('tanggal_dibuat')->label('Tanggal Dibuat')->default(now())->required(),
@@ -648,16 +595,16 @@ class ReservasiResource extends Resource
                     ->color(fn (string $state): string => match ($state) {
                         'ACC' => 'success',
                         'NOT ACC' => 'danger',
-                        'CANCELLED' => 'danger',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('status_pembayaran')
                     ->label('Status Pembayaran')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'LUNAS' => 'warning',
+                        'LUNAS' => 'success',
                         'DP' => 'warning',
-                        'BARU' => 'warning',
-                        'BATAL' => 'danger',
+                        'BARU' => 'info',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('tanggal_dibuat')
                     ->label('Tanggal Dibuat')
@@ -665,13 +612,19 @@ class ReservasiResource extends Resource
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn ($record) => static::canEditRecord($record)),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn ($record) => static::canEditRecord($record)),
                 Tables\Actions\Action::make('accept')
                     ->label('Terima')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => Auth::user()?->id_role == 2 && $record->status_reservasi === 'NOT ACC')
+                    ->visible(fn ($record) => 
+                        Auth::user()?->id_role == 2 && 
+                        $record->status_reservasi === 'NOT ACC' &&
+                        static::isCheckInNotPassed($record)
+                    )
                     ->action(function ($record) {
                         $record->id_pic_utc = Auth::id();
                         $record->status_reservasi = 'ACC';
@@ -761,11 +714,47 @@ class ReservasiResource extends Resource
         ];
     }
 
+    /**
+     * Check if a reservasi record can be edited
+     * Not editable if within H-3 before check in (daysUntilCheckIn <= 2)
+     */
+    public static function canEditRecord($record): bool
+    {
+        if (!$record->waktu_check_in) {
+            return true; // Jika tidak ada check in, allow edit
+        }
+
+        $checkInDate = \Carbon\Carbon::parse($record->waktu_check_in)->startOfDay();
+        $now = \Carbon\Carbon::now()->startOfDay();
+        $daysUntilCheckIn = $now->diffInDays($checkInDate, false); // Negative jika sudah lewat
+
+        // Jika H-3 atau kurang dari check in, tidak bisa edit
+        // daysUntilCheckIn <= 2 berarti H-2 atau lebih dekat
+        return $daysUntilCheckIn > 2;
+    }
+
+    /**
+     * Check if check in date has not passed yet
+     */
+    public static function isCheckInNotPassed($record): bool
+    {
+        if (!$record->waktu_check_in) {
+            return true; // Jika tidak ada check in, allow
+        }
+
+        $checkInDate = \Carbon\Carbon::parse($record->waktu_check_in)->startOfDay();
+        $now = \Carbon\Carbon::now()->startOfDay();
+
+        // Return true jika check in belum lewat (check in date >= today)
+        return $checkInDate >= $now;
+    }
+
     public static function syncPivotsFromFormState(Reservasi $record, array $state): void
     {
         $fSelected = array_filter($state['fasilitas_selected'] ?? []);
         $fMulai = $state['fasilitas_mulai'] ?? [];
         $fSelesai = $state['fasilitas_selesai'] ?? [];
+        $fJumlahOrang = $state['fasilitas_jumlah_orang'] ?? [];
         $fSync = [];
 
         $jenis = $state['jenis_member'] ?? 'Internal';
@@ -784,6 +773,7 @@ class ReservasiResource extends Resource
             $fSync[(int) $fid] = [
                 'mulai' => $fMulai[$groupKey] ?? null,
                 'selesai' => $fSelesai[$groupKey] ?? null,
+                'jumlah_orang' => max(1, (int) ($fJumlahOrang[$groupKey] ?? 1)),
             ];
         }
 
@@ -1020,6 +1010,11 @@ class ReservasiResource extends Resource
 
     protected static function bookedDatesForFacility(int $facilityId, ?int $excludeReservasiId = null): array
     {
+        // If no explicit exclude ID, try to get from current editing context
+        if ($excludeReservasiId === null) {
+            $excludeReservasiId = static::$currentEditingReservasiId;
+        }
+
         $cacheKey = $facilityId . '|' . ($excludeReservasiId ?: 0);
         if (isset(static::$bookedDateCache[$cacheKey]))
             return static::$bookedDateCache[$cacheKey];
@@ -1029,6 +1024,8 @@ class ReservasiResource extends Resource
             ->where('fasilitas_id', $facilityId)
             ->when($excludeReservasiId, fn($q) => $q->where('reservasi_id', '!=', $excludeReservasiId))
             ->get();
+
+        \Log::debug("bookedDatesForFacility: facId=$facilityId, exclude=$excludeReservasiId, found=" . count($rows) . " rows");
 
         $dates = [];
         foreach ($rows as $r) {
@@ -1054,13 +1051,59 @@ class ReservasiResource extends Resource
         if (empty($ids))
             return [];
 
-        $currentId = (int) (request()->route('record') ?? 0) ?: null;
+        // Try to get reservasiId from multiple sources (in priority order):
+        // 1. Static property set in mount() - this is set by EditReservasi::mount()
+        // 2. Route parameter - fallback for form schema evaluation
+        // 3. Hidden field 'reservasi_id_edit' if it exists in the form
+        $reservasiId = static::$currentEditingReservasiId;
+        
+        if (!$reservasiId) {
+            // Try to get from hidden field that might be set in form
+            try {
+                $hiddenId = $get('reservasi_id_edit');
+                if ($hiddenId) {
+                    $reservasiId = (int) $hiddenId;
+                }
+            } catch (\Exception $e) {
+                // Silently fail, try next source
+            }
+        }
+        
+        if (!$reservasiId) {
+            // Try to get from route parameter
+            try {
+                $recordId = request()->route('record');
+                if ($recordId) {
+                    $reservasiId = (int) $recordId;
+                }
+            } catch (\Exception $e) {
+                \Log::debug("Could not get record from route: " . $e->getMessage());
+            }
+        }
+        
+        // DEBUG - show what we found
+        \Log::debug("disabledDatesForGroup($groupKey): staticProp=" . static::$currentEditingReservasiId . ", routeRecord=$reservasiId, facilityIds=" . json_encode($ids));
 
         $all = [];
         foreach ($ids as $fid) {
-            $all = array_merge($all, static::bookedDatesForFacility($fid, $currentId));
+            // Pass $reservasiId to exclude current reservation from conflict check
+            $dates = static::bookedDatesForFacility($fid, $reservasiId);
+            \Log::debug("  Facility $fid: bookedDatesForFacility with reservasiId=$reservasiId returned " . count($dates) . " blocked dates");
+            $all = array_merge($all, $dates);
         }
         return array_values(array_unique($all));
+    }
+
+    // Helper method to get the current editing reservasi ID
+    protected static function getCurrentEditingReservasiId(): ?int
+    {
+        return static::$currentEditingReservasiId;
+    }
+
+    // Helper method to clear booked date cache
+    public static function clearBookedDateCache(): void
+    {
+        static::$bookedDateCache = [];
     }
 
     protected static function facilityIdsByGroupKey(string $groupKey): array

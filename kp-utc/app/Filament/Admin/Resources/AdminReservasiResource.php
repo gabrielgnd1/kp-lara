@@ -22,8 +22,10 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Illuminate\Support\HtmlString;
 
 class AdminReservasiResource extends Resource
 {
@@ -181,7 +183,6 @@ class AdminReservasiResource extends Resource
                         ->options([
                             'ACC' => 'Accepted',
                             'NOT ACC' => 'Not Accepted',
-                            'CANCELLED' => 'Cancelled'
                         ])
                         ->required(),
                     Select::make('status_pembayaran')
@@ -190,7 +191,6 @@ class AdminReservasiResource extends Resource
                             'BARU' => 'New',
                             'DP' => 'Down Payment',
                             'LUNAS' => 'Fully Paid',
-                            'BATAL' => 'Cancelled'
                         ])
                         ->required(),
                 ])
@@ -208,6 +208,67 @@ class AdminReservasiResource extends Resource
                 ->numeric()
                 ->disabled()
                 ->prefix('Rp'),
+
+            // SECTION: Ringkasan Dokumen (View-Only untuk Super Admin)
+            Section::make('📂 Ringkasan Dokumen')
+                ->description('Semua file dokumen yang telah diupload')
+                ->visible(fn(Get $get) => !empty($get('file_reservation_form')) || !empty($get('file_bukti_dp')) || !empty($get('file_bukti_lunas')))
+                ->schema([
+                    Group::make()
+                        ->schema([
+                            Placeholder::make('doc_form')
+                                ->label('📋 Reservation Form')
+                                ->dehydrated(false)
+                                ->content(function(Get $get) {
+                                    $file = $get('file_reservation_form');
+                                    if ($file && !empty($file)) {
+                                        if (is_array($file)) {
+                                            $file = $file[0] ?? null;
+                                        }
+                                        if ($file && is_string($file)) {
+                                            $url = asset('storage/' . $file);
+                                            return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"inline-flex items-center gap-2 px-4 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium\">📥 Download Reservation Form</a>");
+                                        }
+                                    }
+                                    return '❌ Tidak ada file';
+                                }),
+
+                            Placeholder::make('doc_dp')
+                                ->label('💳 Bukti Pembayaran DP')
+                                ->dehydrated(false)
+                                ->content(function(Get $get) {
+                                    $file = $get('file_bukti_dp');
+                                    if ($file && !empty($file)) {
+                                        if (is_array($file)) {
+                                            $file = $file[0] ?? null;
+                                        }
+                                        if ($file && is_string($file)) {
+                                            $url = asset('storage/' . $file);
+                                            return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"inline-flex items-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium\">📥 Download Bukti DP</a>");
+                                        }
+                                    }
+                                    return '❌ Tidak ada file';
+                                }),
+
+                            Placeholder::make('doc_lunas')
+                                ->label('✅ Bukti Pembayaran Lunas')
+                                ->dehydrated(false)
+                                ->content(function(Get $get) {
+                                    $file = $get('file_bukti_lunas');
+                                    if ($file && !empty($file)) {
+                                        if (is_array($file)) {
+                                            $file = $file[0] ?? null;
+                                        }
+                                        if ($file && is_string($file)) {
+                                            $url = asset('storage/' . $file);
+                                            return new HtmlString("<a href=\"{$url}\" target=\"_blank\" class=\"inline-flex items-center gap-2 px-4 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 font-medium\">📥 Download Bukti Lunas</a>");
+                                        }
+                                    }
+                                    return '❌ Tidak ada file';
+                                }),
+                        ])
+                        ->columns(1),
+                ]),
 
             DateTimePicker::make('tanggal_dibuat')
                 ->label('Tanggal Dibuat')
@@ -267,8 +328,8 @@ class AdminReservasiResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'ACC' => 'success',
-                        'NOT ACC' => 'warning',
-                        'CANCELLED' => 'danger',
+                        'NOT ACC' => 'danger',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('status_pembayaran')
                     ->label('Status Pembayaran')
@@ -277,7 +338,7 @@ class AdminReservasiResource extends Resource
                         'LUNAS' => 'success',
                         'DP' => 'warning',
                         'BARU' => 'info',
-                        'BATAL' => 'danger',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('tanggal_dibuat')
                     ->label('Tanggal Dibuat')
@@ -289,14 +350,12 @@ class AdminReservasiResource extends Resource
                     ->options([
                         'ACC' => 'Accepted',
                         'NOT ACC' => 'Not Accepted',
-                        'CANCELLED' => 'Cancelled'
                     ]),
                 Tables\Filters\SelectFilter::make('status_pembayaran')
                     ->options([
                         'BARU' => 'New',
                         'DP' => 'Down Payment',
                         'LUNAS' => 'Fully Paid',
-                        'BATAL' => 'Cancelled'
                     ]),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
@@ -316,7 +375,10 @@ class AdminReservasiResource extends Resource
                     })
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn ($record) => static::canEditRecord($record)),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn ($record) => static::canEditRecord($record)),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\Action::make('accept')
                     ->label('Terima')
@@ -324,7 +386,8 @@ class AdminReservasiResource extends Resource
                     ->color('success')
                     ->visible(fn ($record) => 
                         Auth::user()->role === 'Admin UTC' && 
-                        $record->status_reservasi === 'NOT ACC'
+                        $record->status_reservasi === 'NOT ACC' &&
+                        static::isCheckInNotPassed($record)
                     )
                     ->action(function ($record) {
                         $record->update([
@@ -350,6 +413,41 @@ class AdminReservasiResource extends Resource
         return [
             //
         ];
+    }
+
+    /**
+     * Check if a reservasi record can be edited
+     * Not editable if within H-3 before check in (daysUntilCheckIn <= 2)
+     */
+    public static function canEditRecord($record): bool
+    {
+        if (!$record->waktu_check_in) {
+            return true; // Jika tidak ada check in, allow edit
+        }
+
+        $checkInDate = \Carbon\Carbon::parse($record->waktu_check_in)->startOfDay();
+        $now = \Carbon\Carbon::now()->startOfDay();
+        $daysUntilCheckIn = $now->diffInDays($checkInDate, false); // Negative jika sudah lewat
+
+        // Jika H-3 atau kurang dari check in, tidak bisa edit
+        // daysUntilCheckIn <= 2 berarti H-2 atau lebih dekat
+        return $daysUntilCheckIn > 2;
+    }
+
+    /**
+     * Check if check in date has not passed yet
+     */
+    public static function isCheckInNotPassed($record): bool
+    {
+        if (!$record->waktu_check_in) {
+            return true; // Jika tidak ada check in, allow
+        }
+
+        $checkInDate = \Carbon\Carbon::parse($record->waktu_check_in)->startOfDay();
+        $now = \Carbon\Carbon::now()->startOfDay();
+
+        // Return true jika check in belum lewat (check in date >= today)
+        return $checkInDate >= $now;
     }
 
     public static function getPages(): array

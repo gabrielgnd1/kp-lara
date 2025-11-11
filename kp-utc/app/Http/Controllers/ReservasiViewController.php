@@ -13,11 +13,10 @@ class ReservasiViewController extends Controller
     
     public function show($id)
     {
-        $reservasi = Reservasi::findOrFail($id);
-        $data = $reservasi->toArray();
+        $reservasi = Reservasi::with(['fasilitas', 'additional', 'menuMakan', 'pic_utc', 'pic_ioc'])->findOrFail($id);
         
         return response()
-            ->view('reservasi.pdf', ['reservasi' => $data])
+            ->view('reservasi.pdf', ['reservasi' => $reservasi])
             ->header('Content-Type', 'text/html; charset=UTF-8');
     }
 }

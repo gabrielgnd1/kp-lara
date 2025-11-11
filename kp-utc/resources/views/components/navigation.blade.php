@@ -1,6 +1,6 @@
 @props(['user' => null])
 
-<nav class="bg-white border-b border-[#A8DE30]/10">
+<nav class="bg-white border-b border-[#A8DE30]/10" x-data="{ open: false }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
@@ -13,6 +13,20 @@
 
                 <!-- Main Navigation -->
                 <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                    @auth
+                        <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('home') ? 'border-[#A8DE30] text-[#31312C]' : 'border-transparent text-[#31312C] hover:text-[#A8DE30] hover:border-[#A8DE30]' }} transition-colors">
+                            Dashboard
+                        </a>
+                        <a href="#" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-[#31312C] hover:text-[#A8DE30] hover:border-[#A8DE30] transition-colors">
+                            Edit Profile
+                        </a>
+                        <a href="{{ route('laporan.list') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('laporan.list') ? 'border-[#A8DE30] text-[#31312C]' : 'border-transparent text-[#31312C] hover:text-[#A8DE30] hover:border-[#A8DE30]' }} transition-colors">
+                            Detail Reservasi
+                        </a>
+                        <a href="{{ route('filament.admin.resources.fasilitas.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-[#31312C] hover:text-[#A8DE30] hover:border-[#A8DE30] transition-colors">
+                            Detail Fasilitas
+                        </a>
+                    @endauth
                 </div>
             </div>
 
@@ -62,9 +76,22 @@
     <!-- Mobile menu -->
     <div :class="{'block': open, 'hidden': !open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <a href="{{ route('home') }}" class="block pl-3 pr-4 py-2 {{ request()->routeIs('home') ? 'text-[#A8DE30] border-l-4 border-[#A8DE30] bg-[#A8DE30]/5' : 'text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 hover:border-[#A8DE30] border-l-4 border-transparent' }}">
-                Dashboard
-            </a>
+            @auth
+                <a href="{{ route('home') }}" class="block pl-3 pr-4 py-2 {{ request()->routeIs('home') ? 'text-[#A8DE30] border-l-4 border-[#A8DE30] bg-[#A8DE30]/5' : 'text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 hover:border-[#A8DE30] border-l-4 border-transparent' }}">
+                    Dashboard
+                </a>
+                <a href="#" class="block pl-3 pr-4 py-2 text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 hover:border-[#A8DE30] border-l-4 border-transparent">
+                    Edit Profile
+                </a>
+                <a href="{{ route('laporan.list') }}" class="block pl-3 pr-4 py-2 {{ request()->routeIs('laporan.list') ? 'text-[#A8DE30] border-l-4 border-[#A8DE30] bg-[#A8DE30]/5' : 'text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 hover:border-[#A8DE30] border-l-4 border-transparent' }}">
+                    Detail Reservasi
+                </a>
+                @if(in_array((int)Auth::user()->id_role, [2, 3]))
+                    <a href="{{ route('filament.admin.resources.fasilitas.index') }}" class="block pl-3 pr-4 py-2 text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 hover:border-[#A8DE30] border-l-4 border-transparent">
+                        Detail Fasilitas
+                    </a>
+                @endif
+            @endauth
         </div>
 
         @auth

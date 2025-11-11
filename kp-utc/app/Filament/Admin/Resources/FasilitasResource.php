@@ -4,11 +4,17 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\FasilitasResource\Pages;
 use App\Models\Fasilitas;
+use App\Models\PemesananFasilitas;
 use Filament\Forms;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class FasilitasResource extends Resource
 {
@@ -16,6 +22,15 @@ class FasilitasResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
     protected static ?string $navigationGroup = 'Reservation Management';
     protected static ?string $navigationLabel = 'Manage Facilities';
+
+    /**
+     * Hanya Admin IOC (id_role 3) dan Admin UTC (id_role 2) yang bisa akses
+     */
+    public static function canAccess(): bool
+    {
+        $user = Auth::user();
+        return $user && in_array($user->id_role, [2, 3]); // 2 = Admin UTC, 3 = Admin IOC
+    }
 
     public static function form(Form $form): Form
     {
@@ -135,6 +150,48 @@ class FasilitasResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('cek_availability')
+                    ->label('Cek Ketersediaan')
+                    ->icon('heroicon-o-calendar')
+                    ->fillForm(fn (Fasilitas $record) => [
+                        'fasilitas_id' => $record->id,
+                        'fasilitas_nama' => $record->nama,
+                    ])
+                    ->form([
+                        Hidden::make('fasilitas_id'),
+                        Textarea::make('fasilitas_nama')
+                            ->label('Fasilitas')
+                            ->readOnly()
+                            ->columnSpanFull(),
+                        DatePicker::make('check_date')
+                            ->label('Tanggal')
+                            ->required(),
+                    ])
+                    ->action(function (array $data, Fasilitas $record) {
+                        $checkDate = \Carbon\Carbon::parse($data['check_date'])->toDateString();
+                        
+                        // Cek apakah sudah ada pemesanan fasilitas pada tanggal tersebut
+                        $booked = \App\Models\PemesananFasilitas::where('fasilitas_id', $record->id)
+                            ->where('tanggal', $checkDate)
+                            ->where('status', '!=', 'canceled')
+                            ->exists();
+                        
+                        if ($booked) {
+                            Notification::make()
+                                ->title('Fasilitas Sudah Dipesan')
+                                ->body("Fasilitas {$record->nama} sudah dipesan pada tanggal " . \Carbon\Carbon::parse($checkDate)->format('d-m-Y'))
+                                ->warning()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Fasilitas Tersedia')
+                                ->body("Fasilitas {$record->nama} tersedia pada tanggal " . \Carbon\Carbon::parse($checkDate)->format('d-m-Y'))
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->modal()
+                    ->modalHeading('Cek Ketersediaan Fasilitas'),
             ])
             ->bulkActions([
             ]);

@@ -11,6 +11,44 @@ class EditReservasi extends EditRecord
 {
     protected static string $resource = ReservasiResource::class;
 
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+        // Set the current editing reservasi ID EARLY for validation
+        ReservasiResource::$currentEditingReservasiId = (int) $record;
+        \Log::debug("EditReservasi::mount() - Set currentEditingReservasiId = " . $record);
+        
+        // Clear static date cache so validation fetches fresh data
+        ReservasiResource::clearBookedDateCache();
+
+        // Check if edit is allowed (not within H-3 before check in)
+        if (!$this->canEdit()) {
+            \Filament\Notifications\Notification::make()
+                ->title('Tidak dapat mengedit')
+                ->body('Reservasi tidak dapat diedit mulai H-3 sebelum tanggal check in')
+                ->danger()
+                ->send();
+            
+            $this->redirect($this->getResource()::getUrl('index'));
+        }
+    }
+
+    protected function canEdit(): bool
+    {
+        $checkIn = $this->record->waktu_check_in;
+        if (!$checkIn) {
+            return true; // Jika tidak ada check in, allow edit
+        }
+
+        $checkInDate = Carbon::parse($checkIn)->startOfDay();
+        $now = Carbon::now()->startOfDay();
+        $daysUntilCheckIn = $now->diffInDays($checkInDate, false); // Negative jika sudah lewat
+
+        // Jika H-3 atau kurang dari check in, tidak bisa edit
+        // daysUntilCheckIn <= 2 berarti H-2 atau lebih dekat
+        return $daysUntilCheckIn > 2;
+    }
+
     protected function getRedirectUrl(): string
     {
         // setelah Save, balik ke daftar (index)
@@ -26,6 +64,9 @@ class EditReservasi extends EditRecord
 
     protected function afterSave(): void
     {
+        // Reset the static property
+        ReservasiResource::$currentEditingReservasiId = null;
+
         // Ambil seluruh state form (termasuk mirror arrays)
         $state = $this->form->getRawState();
 
@@ -42,11 +83,27 @@ class EditReservasi extends EditRecord
                 ->whereIn('cottage_slug', $perPerson)
                 ->update(['qty' => $jml]);
         }
+
+        // --- Simpan file ke field reservasi table ---
+        if (!empty($state['file_reservation_form'])) {
+            $this->record->update(['file_reservation_form' => $state['file_reservation_form']]);
+        }
+
+        if (!empty($state['file_bukti_dp'])) {
+            $this->record->update(['file_bukti_dp' => $state['file_bukti_dp']]);
+        }
+
+        if (!empty($state['file_bukti_lunas'])) {
+            $this->record->update(['file_bukti_lunas' => $state['file_bukti_lunas']]);
+        }
     }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $record = $this->record->loadMissing(['fasilitas', 'additional', 'menuMakan']);
+
+        // Set the reservasi_id in hidden field for validation callbacks
+        $data['reservasi_id_edit'] = (int) $this->record->id;
 
         $data['diskon'] = $data['diskon'] ?? (int) ($this->record->diskon ?? 0);
 
@@ -127,7 +184,11 @@ class EditReservasi extends EditRecord
             $cout
         );
 
-        // Buang mirror fields agar tidak disimpan ke kolom non-eksis
+        // status_pembayaran sudah langsung di-bind ke radio, tidak perlu logic kompleks
+        // Radio hanya allow DP & LUNAS, tidak ada BARU di form edit
+        // Jadi status_pembayaran akan otomatis terupdate dari form
+
+        // Buang mirror fields dan radio fields agar tidak disimpan ke kolom non-eksis
         unset(
             $data['fasilitas_selected'],
             $data['fasilitas_mulai'],
@@ -137,7 +198,8 @@ class EditReservasi extends EditRecord
             $data['additional_selesai'],
             $data['menu_makan_selected'],
             $data['menu_makan_jumlah'],
-            $data['hari_tipe']
+            $data['hari_tipe'],
+            $data['reservasi_id_edit']
         );
 
         return $data;

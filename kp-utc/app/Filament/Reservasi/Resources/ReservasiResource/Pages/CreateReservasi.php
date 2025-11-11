@@ -13,6 +13,9 @@ class CreateReservasi extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // status_pembayaran sudah langsung dari form, tidak perlu transform
+        // Radio hanya allow DP & LUNAS, jadi sudah pasti valid
+        
         // Hanya kolom tabel reservasi
         return [
             'nama_pemesan' => $data['nama_pemesan'] ?? null,
@@ -25,7 +28,7 @@ class CreateReservasi extends CreateRecord
             'jumlah_perempuan' => $data['jumlah_perempuan'] ?? 0,
             'informasi_tambahan' => $data['informasi_tambahan'] ?? '',
             'status_reservasi' => $data['status_reservasi'] ?? 'NOT ACC',
-            'status_pembayaran' => $data['status_pembayaran'] ?? 'BARU',
+            'status_pembayaran' => $data['status_pembayaran'] ?? 'DP',
             'tanggal_dibuat' => $data['tanggal_dibuat'] ?? now(),
             'id_pic_ioc' => $data['id_pic_ioc'] ?? null,
             'id_pic_utc' => $data['id_pic_utc'] ?? null,
@@ -88,6 +91,21 @@ class CreateReservasi extends CreateRecord
                     // 'harga_satuan'  => static::hargaCottage($slug, $state['hari_tipe']),
                 ]);
             }
+        }
+
+        // --- Simpan file ke field reservasi table ---
+        $updates = [];
+        if (!empty($state['file_reservation_form'])) {
+            $updates['file_reservation_form'] = $state['file_reservation_form'];
+        }
+        if (!empty($state['file_bukti_dp'])) {
+            $updates['file_bukti_dp'] = $state['file_bukti_dp'];
+        }
+        if (!empty($state['file_bukti_lunas'])) {
+            $updates['file_bukti_lunas'] = $state['file_bukti_lunas'];
+        }
+        if (!empty($updates)) {
+            $this->record->update($updates);
         }
 
         \Filament\Notifications\Notification::make()

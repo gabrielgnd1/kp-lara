@@ -18,7 +18,6 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
             Actions\Action::make('restart_account')
                 ->label('Restart Account')
                 ->color('warning')
