@@ -120,7 +120,7 @@ class LaporanResource extends Resource
         ])
         ->paginated()
         ->striped(false)
-        ->recordUrl(fn (Laporan $record) => static::getUrl('discussion', ['record' => $record]))
+        ->recordUrl(fn (Laporan $record) => route('discussion.show', $record->id))
         ->actions([
             Tables\Actions\Action::make('discussion')
                 ->label('Diskusi')
@@ -139,7 +139,7 @@ class LaporanResource extends Resource
 
     public static function getSlug(): string
     {
-        return 'detaillaporan';
+        return 'laporan';
     }
 
     public static function getPages(): array
@@ -148,7 +148,6 @@ class LaporanResource extends Resource
             'index' => Pages\ListLaporans::route('/'),
             'create' => Pages\CreateLaporan::route('/create'),
             'edit' => Pages\EditLaporan::route('/{record}/edit'),
-            'discussion' => Pages\DiscussionLaporan::route('/{record}/discussion'),
         ];
     }
 }

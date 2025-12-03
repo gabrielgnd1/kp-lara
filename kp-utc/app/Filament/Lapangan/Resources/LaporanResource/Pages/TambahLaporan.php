@@ -26,6 +26,11 @@ class TambahLaporan extends Page
     protected static string $view = 'filament.lapangan.resources.laporan-resource.pages.tambah-laporan';
 
     public ?array $data = [];
+    
+    public static function getRoutePath(): string
+    {
+        return '/tambah';
+    }
 
     public function mount(): void
     {

@@ -8,7 +8,7 @@
                 />
                 <div class="font-bold text-lg">{{ $laporan->nama_laporan }}</div>
                 <div class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($laporan->tanggal_lapor)->translatedFormat('d F Y') }}</div>
-                <a href="{{ route('filament.lapangan.resources.laporan-resource.edit', $laporan->id) }}"
+                <a href="{{ route('discussion.show', $laporan->id) }}"
                    class="mt-2 inline-block px-4 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700">
                     Detail
                 </a>

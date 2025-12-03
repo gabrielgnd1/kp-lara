@@ -14,11 +14,11 @@ class UserSeeder extends Seeder
 {
     \App\Models\User::create([
         'username' => 'lap',   
-        'name' => 'lapa',        
-        'email' => 'lap@utc.com',
+        'name' => 'super',        
+        'email' => 'supergab@utc.com',
         'password' => \Illuminate\Support\Facades\Hash::make('test1234'),
         'status' => 'Available',
-        'id_role' => 3,
+        'id_role' => 1,
     ]);
 }
 }
