@@ -16,7 +16,7 @@ class AdminLaporanResource extends Resource
     protected static ?string $model = Laporan::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Report Management';
-    protected static ?string $navigationLabel = 'Laporan';
+    protected static ?string $navigationLabel = 'Manage Laporan';
 
     public static function getModelLabel(): string
     {

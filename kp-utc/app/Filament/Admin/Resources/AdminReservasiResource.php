@@ -32,7 +32,7 @@ class AdminReservasiResource extends Resource
     protected static ?string $model = Reservasi::class;
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationGroup = 'Reservation Management';
-    protected static ?string $navigationLabel = 'Reservasi';
+    protected static ?string $navigationLabel = 'Manage Reservasi';
 
     public static function getModelLabel(): string
     {
@@ -208,6 +208,27 @@ class AdminReservasiResource extends Resource
                 ->numeric()
                 ->disabled()
                 ->prefix('Rp'),
+
+            // SECTION: Fasilitas yang Dipesan
+            Section::make('Fasilitas yang Dipesan')
+                ->description('Daftar fasilitas yang telah dipesan')
+                ->schema([
+                    Forms\Components\View::make('forms.components.booked-facilities'),
+                ]),
+
+            // SECTION: Additional yang Dipesan
+            Section::make('Additional yang Dipesan')
+                ->description('Daftar additional yang telah dipesan')
+                ->schema([
+                    Forms\Components\View::make('forms.components.booked-additional'),
+                ]),
+
+            // SECTION: Menu Makan yang Dipesan
+            Section::make('Menu Makan yang Dipesan')
+                ->description('Daftar menu makan yang telah dipesan')
+                ->schema([
+                    Forms\Components\View::make('forms.components.booked-menu-makan'),
+                ]),
 
             // SECTION: Ringkasan Dokumen (View-Only untuk Super Admin)
             Section::make('📂 Ringkasan Dokumen')

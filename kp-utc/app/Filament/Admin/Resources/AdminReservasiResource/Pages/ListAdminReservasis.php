@@ -13,7 +13,7 @@ class ListAdminReservasis extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // CreateAction removed - Super Admin cannot create reservations
         ];
     }
 }

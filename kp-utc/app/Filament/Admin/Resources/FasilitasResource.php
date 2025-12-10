@@ -21,7 +21,7 @@ class FasilitasResource extends Resource
     protected static ?string $model = Fasilitas::class;
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
     protected static ?string $navigationGroup = 'Reservation Management';
-    protected static ?string $navigationLabel = 'Manage Facilities';
+    protected static ?string $navigationLabel = 'Manage Fasilitas';
 
     /**
      * Hanya Admin IOC (id_role 3) dan Admin UTC (id_role 2) yang bisa akses
