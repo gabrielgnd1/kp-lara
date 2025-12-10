@@ -4,7 +4,7 @@
         $variants = collect($variants);
     }
     
-    // Group variants by day and menginap type
+    // Group variants by day and jenis_user type
     $weekday = $variants->where('day', 'Weekday');
     $weekend = $variants->where('day', 'Weekend');
     
@@ -12,8 +12,22 @@
     $capacity = $variants->first()->kapasitas ?? 0;
     $description = $variants->first()->keterangan ?? '';
     
-    // Get first facility for edit button
-    $firstFacility = $variants->first();
+    // Check availability - facility is ONLY available if ALL variants are available
+    // If ANY variant is booked, show as NOT available
+    $isAvailable = true;
+    
+    foreach ($variants as $variant) {
+        if (isset($variant->is_available_for_period) && !$variant->is_available_for_period) {
+            $isAvailable = false;
+            break;
+        } elseif ($variant->getAttribute('is_available_for_period') === false) {
+            $isAvailable = false;
+            break;
+        } elseif (!isset($variant->is_available_for_period) && $variant->getAttribute('is_available_for_period') === null && $variant->status !== 'Available') {
+            $isAvailable = false;
+            break;
+        }
+    }
 @endphp
 
 <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); overflow: hidden;">
@@ -82,12 +96,8 @@
         </div>
     </div>
 
-    <!-- Card Footer - Status Only (for non-superadmin) -->
-    @if (isset($showStatusOnly) && $showStatusOnly)
+    <!-- Card Footer - Status Only -->
     <div style="background-color: #f3f4f6; padding: 0.75rem 1rem; border-top: 1px solid #e5e7eb; text-align: center;">
-        @php
-            $isAvailable = $variants[0]->is_available_for_period ?? ($variants[0]->status === 'Available');
-        @endphp
         @if ($isAvailable)
             <span style="color: #10b981; font-weight: 600; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                 <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -98,23 +108,6 @@
                 <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 Tidak Tersedia
             </span>
-    @endif
+        @endif
     </div>
-    @else
-    <!-- Card Footer - Edit Button (for superadmin) -->
-    <div style="background-color: #f3f4f6; padding: 0.75rem 1rem; border-top: 1px solid #e5e7eb;">
-        <button
-            wire:click="openEditModal({{ $firstFacility->id ?? 0 }})"
-            style="width: 100%; background-color: #A8DE30; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background-color 0.15s ease;"
-            onmouseover="this.style.backgroundColor='#96C81E'"
-            onmouseout="this.style.backgroundColor='#A8DE30'"
-        >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
-            Edit
-        </button>
-    </div>
-    @endif
 </div>
-

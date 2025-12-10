@@ -71,7 +71,7 @@
                     <div style="background-color: #f9fafb; padding: 1.5rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
                             @foreach ($facilities['hall'] as $facilityName => $variants)
-                                @include('filament.admin.resources.super-admin-fasilitas-resource.pages.partials.facility-card', ['variants' => $variants])
+                                @include('filament.reservasi.resources.fasilitas-detail-resource.pages.partials.facility-card', ['variants' => $variants])
                             @endforeach
                         </div>
                     </div>
@@ -97,7 +97,7 @@
                     <div style="background-color: #f9fafb; padding: 1.5rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
                             @foreach ($facilities['cottage'] as $facilityName => $variants)
-                                @include('filament.admin.resources.super-admin-fasilitas-resource.pages.partials.facility-card', ['variants' => $variants])
+                                @include('filament.reservasi.resources.fasilitas-detail-resource.pages.partials.facility-card', ['variants' => $variants])
                             @endforeach
                         </div>
                     </div>
@@ -123,7 +123,7 @@
                     <div style="background-color: #f9fafb; padding: 1.5rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
                             @foreach ($facilities['vip_cottage'] as $facilityName => $variants)
-                                @include('filament.admin.resources.super-admin-fasilitas-resource.pages.partials.facility-card', ['variants' => $variants])
+                                @include('filament.reservasi.resources.fasilitas-detail-resource.pages.partials.facility-card', ['variants' => $variants])
                             @endforeach
                         </div>
                     </div>
@@ -149,7 +149,7 @@
                     <div style="background-color: #f9fafb; padding: 1.5rem;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
                             @foreach ($facilities['others'] as $facilityName => $variants)
-                                @include('filament.admin.resources.super-admin-fasilitas-resource.pages.partials.facility-card', ['variants' => $variants])
+                                @include('filament.reservasi.resources.fasilitas-detail-resource.pages.partials.facility-card', ['variants' => $variants])
                             @endforeach
                         </div>
                     </div>
@@ -158,3 +158,6 @@
         @endif
     </div>
 </x-filament-panels::page>
+
+
+

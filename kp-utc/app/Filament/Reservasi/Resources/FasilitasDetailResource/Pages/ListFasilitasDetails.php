@@ -57,10 +57,26 @@ class ListFasilitasDetails extends Page
             return [];
         }
 
-        $mulai = Carbon::createFromFormat('Y-m-d\TH:i', $this->tanggal_mulai);
-        $selesai = Carbon::createFromFormat('Y-m-d\TH:i', $this->tanggal_selesai);
+        try {
+            $mulai = Carbon::createFromFormat('Y-m-d\TH:i', $this->tanggal_mulai);
+            $selesai = Carbon::createFromFormat('Y-m-d\TH:i', $this->tanggal_selesai);
+        } catch (\Exception $e) {
+            // Fallback: try parsing as ISO format
+            $mulai = Carbon::parse($this->tanggal_mulai);
+            $selesai = Carbon::parse($this->tanggal_selesai);
+        }
 
-        $allFacilities = Fasilitas::orderBy('nama')->orderBy('id')->get()->unique('nama')->values();
+        \Log::info('Facility search:', [
+            'tanggal_mulai_raw' => $this->tanggal_mulai,
+            'tanggal_selesai_raw' => $this->tanggal_selesai,
+            'mulai_parsed' => $mulai->toString(),
+            'selesai_parsed' => $selesai->toString(),
+        ]);
+
+        $allFacilities = Fasilitas::orderBy('nama')->orderBy('day')->orderBy('jenis_user')->get();
+
+        // Get unique facilities by name
+        $uniqueFacilities = $allFacilities->unique('nama')->values();
 
         $categorized = [
             'hall' => [],
@@ -69,16 +85,23 @@ class ListFasilitasDetails extends Page
             'others' => [],
         ];
 
-        foreach ($allFacilities as $fasilitas) {
-            $isBooked = PemesananFasilitas::whereHas('reservasi', function ($query) use ($mulai, $selesai) {
-                $query->where(function ($q) use ($mulai, $selesai) {
-                    $q->where('waktu_check_in', '<', $selesai)
-                      ->where('waktu_check_out', '>', $mulai);
-                });
-            })->where('fasilitas_id', $fasilitas->id)->exists();
+        foreach ($uniqueFacilities as $fasilitas) {
+            // Get ALL variants for this facility (Weekday/Weekend, Eksternal/Internal)
+            $variants = $allFacilities->where('nama', $fasilitas->nama);
+            
+            // Check availability for EACH VARIANT separately
+            foreach ($variants as $variant) {
+                $isBooked = PemesananFasilitas::whereHas('reservasi', function ($query) use ($mulai, $selesai) {
+                    $query->where('waktu_check_in', '<', $selesai)
+                          ->where('waktu_check_out', '>', $mulai);
+                })->where('fasilitas_id', $variant->id)
+                ->exists();
 
-            $fasilitas->is_available_for_period = ($fasilitas->status === 'Available' && !$isBooked);
-            $fasilitas->status_display = $fasilitas->is_available_for_period ? 'Available' : 'Not Available';
+                $isAvailable = ($variant->status === 'Available' && !$isBooked);
+                $variant->setAttribute('is_available_for_period', $isAvailable);
+            }
+            
+            \Log::info("Facility {$fasilitas->nama} - Variants count: " . $variants->count());
 
             $nama_lower = strtolower($fasilitas->nama);
 
@@ -91,25 +114,25 @@ class ListFasilitasDetails extends Page
                 if (!isset($categorized['hall'][$key])) {
                     $categorized['hall'][$key] = [];
                 }
-                $categorized['hall'][$key][] = $fasilitas;
+                $categorized['hall'][$key] = $variants->values();
             } elseif (str_contains($nama_lower, 'vip cottage') || str_contains($nama_lower, 'vip')) {
                 $key = $fasilitas->nama;
                 if (!isset($categorized['vip_cottage'][$key])) {
                     $categorized['vip_cottage'][$key] = [];
                 }
-                $categorized['vip_cottage'][$key][] = $fasilitas;
+                $categorized['vip_cottage'][$key] = $variants->values();
             } elseif (str_contains($nama_lower, 'cottage')) {
                 $key = $fasilitas->nama;
                 if (!isset($categorized['cottage'][$key])) {
                     $categorized['cottage'][$key] = [];
                 }
-                $categorized['cottage'][$key][] = $fasilitas;
+                $categorized['cottage'][$key] = $variants->values();
             } else {
                 $key = $fasilitas->nama;
                 if (!isset($categorized['others'][$key])) {
                     $categorized['others'][$key] = [];
                 }
-                $categorized['others'][$key][] = $fasilitas;
+                $categorized['others'][$key] = $variants->values();
             }
         }
 
