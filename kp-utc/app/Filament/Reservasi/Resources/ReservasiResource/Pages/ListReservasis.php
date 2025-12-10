@@ -10,6 +10,19 @@ class ListReservasis extends ListRecords
 {
     protected static string $resource = ReservasiResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Detail Reservasi';
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            $this->getResource()::getUrl() => 'Detail Reservasi',
+            '#' => 'Daftar',
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
