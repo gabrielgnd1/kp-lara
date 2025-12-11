@@ -28,45 +28,39 @@ class LaporanResource extends Resource
                 ->required()
                 ->maxLength(100),
 
+            Forms\Components\Textarea::make('deskripsi')
+                ->label('Deskripsi')
+                ->required()
+                ->rows(3)
+                ->maxLength(1000),
+
             Forms\Components\FileUpload::make('foto_laporan')
                 ->label('Foto Laporan')
                 ->image()
+                ->disk('public')
+                ->directory('laporan')
+                ->visibility('public')
                 ->required(),
-
-            Forms\Components\Select::make('prioritas')
-                ->label('Prioritas')
-                ->required()
-                ->options([
-                    'Rendah' => 'Rendah',
-                    'Sedang' => 'Sedang',
-                    'Tinggi' => 'Tinggi',
-                ]),
 
             Forms\Components\DatePicker::make('tanggal_lapor')
                 ->label('Tanggal Lapor')
                 ->default(now())
                 ->required(),
 
-            Forms\Components\DatePicker::make('tanggal_deadline')
-                ->label('Tanggal Deadline'),
-
-            Forms\Components\Select::make('tipe_laporan')
-                ->label('Tipe Laporan')
-                ->required()
-                ->options([
-                    'Kebersihan' => 'Kebersihan',
-                    'Kerusakan' => 'Kerusakan',
-                    'Perbaikan' => 'Perbaikan',
-                    'Lainnya' => 'Lainnya',
-                ]),
+            Forms\Components\Select::make('area_id')
+                ->relationship('area', 'nama_area')
+                ->label('Area')
+                ->required(),
 
             Forms\Components\Hidden::make('user_id')
                 ->default(fn () => auth()->id())
                 ->required(),
 
-            Forms\Components\Select::make('area_id')
-                ->relationship('area', 'nama_area')
-                ->required(),
+            Forms\Components\Hidden::make('prioritas')
+                ->default('Belum Ditentukan'),
+
+            Forms\Components\Hidden::make('tipe_laporan')
+                ->default('Lainnya'),
 
             Forms\Components\Hidden::make('decision')
                 ->default('Belum Diproses'),
@@ -83,35 +77,44 @@ class LaporanResource extends Resource
 {
     return $table
         ->columns([ 
-            ImageColumn::make('foto_laporan')
-                ->disk('public')
-                ->visibility('public')
-                ->width(180)
-                ->height(180)
-                ->extraAttributes(['class' => 'rounded-md object-cover mx-auto']),
+            Tables\Columns\Layout\Stack::make([
+                ImageColumn::make('foto_laporan')
+                    ->size(180)
+                    ->alignCenter()
+                    ->defaultImageUrl(asset('assets/images/placeholder-laporan.png'))
+                    ->getStateUsing(function ($record) {
+                        if ($record->foto_laporan) {
+                            return asset('storage/' . $record->foto_laporan);
+                        }
+                        return null;
+                    })
+                    ->square(),
+                
+                TextColumn::make('nama_laporan')
+                    ->weight('bold')
+                    ->alignCenter()
+                    ->searchable(),
 
-            TextColumn::make('nama_laporan')
-                ->weight('bold')
-                ->label('Nama')
-                ->searchable(),
-
-            TextColumn::make('tanggal_lapor')
-                ->label('Tanggal')
-                ->date(),
-
-            TextColumn::make('prioritas')
-                ->label('Prioritas')
-                ->badge()
-                ->color(fn ($state) => match ($state) {
-                    'Tinggi' => 'danger',
-                    'Sedang' => 'warning',
-                    'Rendah' => 'success',
-                    default => 'gray',
-                }),
-
-            TextColumn::make('decision')
-                ->label('Status')
-                ->badge(),
+                TextColumn::make('tanggal_lapor')
+                    ->alignCenter()
+                    ->date('d F Y'),
+                
+                Tables\Columns\Layout\Split::make([
+                    TextColumn::make('prioritas')
+                        ->badge()
+                        ->color(fn ($state) => match ($state) {
+                            'Tinggi' => 'danger',
+                            'Sedang' => 'warning',
+                            'Rendah' => 'success',
+                            'Belum Ditentukan' => 'gray',
+                            default => 'gray',
+                        }),
+                    
+                    TextColumn::make('decision')
+                        ->label('Status')
+                        ->badge(),
+                ])->from('md'),
+            ]),
         ])
         ->contentGrid([
             'default' => 1,

@@ -14,6 +14,7 @@ class Laporan extends Model
     //ini isi smua atribut selain primary key
     protected $fillable = [
         'nama_laporan',
+        'deskripsi',
         'foto_laporan',
         'decision',
         'prioritas',

@@ -18,7 +18,7 @@
                         <p style="color: #111827; margin: 0;">{{ $item->menuMakan->nama ?? '-' }}</p>
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Qty: {{ $item->jumlah ?? 1 }}</p>
                     </div>
-                    @if($item->menuMakan->keterangan)
+                    @if($item->menuMakan && $item->menuMakan->keterangan)
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">
                             {{ $item->menuMakan->keterangan }}
                         </p>

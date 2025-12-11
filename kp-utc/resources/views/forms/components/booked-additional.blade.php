@@ -18,12 +18,12 @@
                         <p style="font-weight: 600; color: #111827; margin: 0;">{{ $item->additional->nama ?? '-' }}</p>
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Qty: {{ $item->jumlah ?? 1 }}</p>
                     </div>
-                    @if($item->additional->keterangan)
+                    @if($item->additional && $item->additional->keterangan)
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">
                             {{ $item->additional->keterangan }}
                         </p>
                     @endif
-                    @if($item->additional->harga)
+                    @if($item->additional && $item->additional->harga)
                         <p style="color: #059669; font-weight: 600; font-size: 0.875rem; margin: 0.5rem 0 0 0;">
                             Rp{{ number_format($item->additional->harga, 0, ',', '.') }}
                         </p>

@@ -21,7 +21,7 @@
                     <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">
                         Kapasitas: {{ $item->fasilitas->kapasitas ?? '-' }} orang
                     </p>
-                    @if($item->fasilitas->keterangan)
+                    @if($item->fasilitas && $item->fasilitas->keterangan)
                         <p style="color: #6b7280; font-size: 0.875rem; margin: 0.5rem 0 0 0;">
                             {{ $item->fasilitas->keterangan }}
                         </p>

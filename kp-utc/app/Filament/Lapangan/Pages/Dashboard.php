@@ -10,6 +10,7 @@ class Dashboard extends BaseDashboard
     protected static ?string $navigationIcon = 'heroicon-o-home';
     protected static ?string $navigationLabel = 'Dashboard';
     protected static ?string $title = 'Dashboard';
+    protected static string $view = 'filament.lapangan.pages.dashboard';
 
     protected function getHeaderActions(): array
     {
@@ -20,5 +21,12 @@ class Dashboard extends BaseDashboard
                 ->color('success')
                 ->url(fn () => \App\Filament\Lapangan\Resources\LaporanResource::getUrl('create')),
         ];
+    }
+
+    public function getLaporans()
+    {
+        return \App\Models\Laporan::with(['user', 'area'])
+            ->orderBy('tanggal_lapor', 'desc')
+            ->get();
     }
 }

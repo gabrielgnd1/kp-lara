@@ -400,7 +400,14 @@ class AdminReservasiResource extends Resource
                     ->visible(fn ($record) => static::canEditRecord($record)),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn ($record) => static::canEditRecord($record)),
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('Lihat'),
+                Tables\Actions\Action::make('view_detail')
+                    ->label('View Detail')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->url(fn (Reservasi $record) => route('reservasi.detail', $record->id))
+                    ->openUrlInNewTab(),
                 Tables\Actions\Action::make('accept')
                     ->label('Terima')
                     ->icon('heroicon-o-check-circle')

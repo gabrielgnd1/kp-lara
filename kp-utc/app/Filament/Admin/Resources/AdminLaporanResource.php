@@ -37,13 +37,26 @@ class AdminLaporanResource extends Resource
                         ->label('Report Name')
                         ->required()
                         ->maxLength(100),
+                    Forms\Components\Textarea::make('deskripsi')
+                        ->label('Description')
+                        ->required()
+                        ->rows(3)
+                        ->maxLength(1000),
                     Forms\Components\FileUpload::make('foto_laporan')
                         ->label('Report Photo')
                         ->image()
+                        ->disk('public')
+                        ->directory('laporan')
+                        ->visibility('public')
+                        ->required(),
+                    Forms\Components\Select::make('area_id')
+                        ->relationship('area', 'nama_area')
+                        ->label('Area')
                         ->required(),
                     Forms\Components\Select::make('prioritas')
                         ->required()
                         ->options([
+                            'Belum Ditentukan' => 'Not Determined',
                             'Rendah' => 'Low',
                             'Sedang' => 'Medium',
                             'Tinggi' => 'High',
@@ -89,7 +102,9 @@ class AdminLaporanResource extends Resource
                     ->label('Nama Laporan')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('foto_laporan')
-                    ->label('Foto'),
+                    ->label('Foto')
+                    ->disk('public')
+                    ->getStateUsing(fn ($record) => $record->foto_laporan ? asset('storage/' . $record->foto_laporan) : null),
                 Tables\Columns\TextColumn::make('prioritas')
                     ->label('Prioritas')
                     ->badge()
@@ -97,6 +112,8 @@ class AdminLaporanResource extends Resource
                         'Tinggi' => 'danger',
                         'Sedang' => 'warning',
                         'Rendah' => 'info',
+                        'Belum Ditentukan' => 'gray',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('tipe_laporan')
                     ->label('Tipe Laporan'),
