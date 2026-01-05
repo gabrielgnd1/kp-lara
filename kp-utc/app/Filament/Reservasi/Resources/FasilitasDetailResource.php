@@ -12,7 +12,7 @@ class FasilitasDetailResource extends Resource
     protected static ?string $model = Fasilitas::class;
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationGroup = null;
-    protected static ?string $navigationLabel = 'Detail Fasilitas';
+    protected static ?string $navigationLabel = 'Daftar Fasilitas';
     protected static ?int $navigationSort = 2;
 
     /**

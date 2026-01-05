@@ -14,13 +14,7 @@ class Dashboard extends BaseDashboard
 
     protected function getHeaderActions(): array
     {
-        return [
-            Action::make('tambah_laporan')
-                ->label('Tambah Laporan')
-                ->icon('heroicon-o-plus')
-                ->color('success')
-                ->url(fn () => \App\Filament\Lapangan\Resources\LaporanResource::getUrl('create')),
-        ];
+        return [];
     }
 
     public function getLaporans()

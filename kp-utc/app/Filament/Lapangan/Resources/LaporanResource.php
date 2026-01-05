@@ -18,7 +18,7 @@ class LaporanResource extends Resource
 {
     protected static ?string $model = Laporan::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationLabel = 'Detail Laporan';
+    protected static ?string $navigationLabel = 'Daftar Laporan';
 
     public static function form(Form $form): Form
     {
@@ -45,6 +45,7 @@ class LaporanResource extends Resource
             Forms\Components\DatePicker::make('tanggal_lapor')
                 ->label('Tanggal Lapor')
                 ->default(now())
+                ->disabled()
                 ->required(),
 
             Forms\Components\Select::make('area_id')

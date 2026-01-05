@@ -21,10 +21,10 @@
                             Edit Profile
                         </a>
                         <a href="{{ route('laporan.list') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('laporan.list') ? 'border-[#A8DE30] text-[#31312C]' : 'border-transparent text-[#31312C] hover:text-[#A8DE30] hover:border-[#A8DE30]' }} transition-colors">
-                            Detail Reservasi
+                            Daftar Reservasi
                         </a>
                         <a href="{{ route('filament.admin.resources.fasilitas.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-[#31312C] hover:text-[#A8DE30] hover:border-[#A8DE30] transition-colors">
-                            Detail Fasilitas
+                            Daftar Fasilitas
                         </a>
                     @endauth
                 </div>
@@ -84,11 +84,11 @@
                     Edit Profile
                 </a>
                 <a href="{{ route('laporan.list') }}" class="block pl-3 pr-4 py-2 {{ request()->routeIs('laporan.list') ? 'text-[#A8DE30] border-l-4 border-[#A8DE30] bg-[#A8DE30]/5' : 'text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 hover:border-[#A8DE30] border-l-4 border-transparent' }}">
-                    Detail Reservasi
+                    Daftar Reservasi
                 </a>
                 @if(in_array((int)Auth::user()->id_role, [2, 3]))
                     <a href="{{ route('filament.admin.resources.fasilitas.index') }}" class="block pl-3 pr-4 py-2 text-[#31312C] hover:text-[#A8DE30] hover:bg-[#A8DE30]/5 hover:border-[#A8DE30] border-l-4 border-transparent">
-                        Detail Fasilitas
+                        Daftar Fasilitas
                     </a>
                 @endif
             @endauth

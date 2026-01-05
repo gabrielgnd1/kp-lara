@@ -5,13 +5,13 @@
             <img src="{{ asset('assets/laporan/maintenan.png') }}" 
                  alt="Maintenance" 
                  class="max-w-full h-auto rounded-lg"
-                 style="max-height: 400px;">
+                 style="max-height: 200px;">
         </div>
 
         <!-- Detail Laporan - Card Grid Layout (same as Detail Laporan page) -->
         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
             <div class="p-6 border-b bg-gray-50">
-                <h2 class="text-xl font-bold text-gray-900">Detail Laporan</h2>
+                <h2 class="text-xl font-bold text-gray-900">Daftar Laporan</h2>
             </div>
             <div class="p-6 bg-gray-50">
                 @php

@@ -3,7 +3,7 @@
 @section('content')
 <div class="p-6 max-w-4xl mx-auto">
     <!-- Back Button -->
-    <a href="javascript:history.back()" class="inline-flex items-center text-blue-500 hover:text-blue-600 mb-6">
+    <a href="javascript:history.back()" class="inline-flex items-center text-black hover:text-gray-700 mb-6">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
         </svg>
@@ -54,9 +54,9 @@
     <!-- Discussion Section -->
     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
         <!-- Discussion Title -->
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 text-white">
+        <div class="bg-gradient-to-r from-[#A8DE30] to-[#A8DE30] px-6 py-4 text-[#31312C]">
             <h3 class="text-xl font-bold">💬 Diskusi</h3>
-            <p class="text-blue-100 text-sm">Jumlah Diskusi: {{ count($discussions) }}</p>
+            <p class="text-[#31312C]/70 text-sm">Jumlah Diskusi: {{ count($discussions) }}</p>
         </div>
 
         <!-- Messages Container -->
@@ -65,7 +65,7 @@
                 <div class="flex gap-4">
                     <!-- Avatar -->
                     <div class="flex-shrink-0">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#A8DE30] to-[#A8DE30]/80 flex items-center justify-center text-[#31312C] font-semibold text-sm">
                             {{ strtoupper(substr($item->user->name, 0, 1)) }}
                         </div>
                     </div>
@@ -109,11 +109,11 @@
                     type="text"
                     name="diskusi"
                     placeholder="Ketik diskusi Anda..."
-                    class="flex-1 bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors text-sm"
+                    class="flex-1 bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#A8DE30] focus:bg-white transition-colors text-sm"
                 />
                 <button 
                     type="submit"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors flex items-center gap-2 text-sm"
+                    class="bg-[#A8DE30] hover:bg-[#A8DE30]/90 text-[#31312C] font-semibold py-2 px-6 rounded-lg transition-colors flex items-center gap-2 text-sm"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>

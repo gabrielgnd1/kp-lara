@@ -36,7 +36,7 @@ class ReservasiResource extends Resource
 {
     protected static ?string $model = Reservasi::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationLabel = 'Detail Reservasi';
+    protected static ?string $navigationLabel = 'Daftar Reservasi';
     protected static array $bookedDateCache = [];
     public static ?int $currentEditingReservasiId = null;
 
@@ -460,8 +460,53 @@ class ReservasiResource extends Resource
             // SECTION 1: Dokumen Pembayaran (Upload & Pilih tipe pembayaran)
             Section::make('💳 Dokumen Pembayaran')
                 ->description('Upload dokumen dan pilih tipe pembayaran')
+                ->visible(fn($record) => $record !== null) // Hanya tampil saat edit, tidak saat create
                 ->schema([
-                    // BARU: Upload Reservation Form (hidden, simpan ke dokumen_reservasi)
+                    // Status Pembayaran Display
+                    Placeholder::make('status_pembayaran_display')
+                        ->label('Status Pembayaran Saat Ini')
+                        ->content(function($record) {
+                            if (!$record || !$record->status_pembayaran) {
+                                return new HtmlString('<span class="text-red-600 font-semibold">❌ Belum Bayar</span>');
+                            } elseif ($record->status_pembayaran === 'DP') {
+                                return new HtmlString('<span class="text-blue-600 font-semibold">💳 DP 30%</span>');
+                            } elseif ($record->status_pembayaran === 'LUNAS') {
+                                return new HtmlString('<span class="text-green-600 font-semibold">✅ LUNAS</span>');
+                            }
+                            return 'Belum Bayar';
+                        })
+                        ->visible(fn($record) => $record !== null),
+
+                    // Radio Tipe Pembayaran - hanya tampil jika belum final (NULL atau DP)
+                    Radio::make('status_pembayaran')
+                        ->label('Pilih Tipe Pembayaran')
+                        ->options(function($record) {
+                            // Jika sudah LUNAS, jangan tampilkan pilihan
+                            if ($record && $record->status_pembayaran === 'LUNAS') {
+                                return [];
+                            }
+                            // Jika sudah DP, hanya tampilkan opsi LUNAS
+                            if ($record && $record->status_pembayaran === 'DP') {
+                                return [
+                                    'LUNAS' => 'LUNAS (Bayar Sisa Sekarang)',
+                                ];
+                            }
+                            // Jika NULL/Belum bayar, tampilkan keduanya
+                            return [
+                                'DP' => 'DP 30% + Upgrade Lunas Nanti',
+                                'LUNAS' => 'LUNAS (Bayar Penuh Sekarang)',
+                            ];
+                        })
+                        ->visible(function($record) {
+                            // Hanya tampil jika status bukan LUNAS
+                            return !($record && $record->status_pembayaran === 'LUNAS');
+                        })
+                        ->dehydrated(true)
+                        ->required(fn(Get $get, $record) => !$get('status_pembayaran') || ($record && $record->status_pembayaran === 'DP'))
+                        ->reactive()
+                        ->live(),
+
+                    // Upload Reservation Form - hanya tampil jika status NULL dan sudah pilih DP
                     FileUpload::make('file_reservation_form')
                         ->label('Upload Reservation Form (Wajib)')
                         ->disk('public')
@@ -471,22 +516,18 @@ class ReservasiResource extends Resource
                         ->preserveFilenames()
                         ->dehydrated(true)
                         ->nullable()
-                        ->required(fn(Get $get) => $get('status_pembayaran') === 'BARU' || !$get('status_pembayaran'))
-                        ->hidden(), // Hidden tapi tetap bisa terima data
+                        ->required(fn(Get $get, $record) => 
+                            $record && !$record->status_pembayaran && $get('status_pembayaran') === 'DP'
+                        )
+                        ->visible(function($record, Get $get) {
+                            // Hanya tampil jika status NULL (belum bayar) dan pilih DP
+                            if ($record && !$record->status_pembayaran && $get('status_pembayaran') === 'DP') {
+                                return true;
+                            }
+                            return false;
+                        }),
 
-                    // Radio Tipe Pembayaran (SELALU TAMPIL, bind ke status_pembayaran)
-                    Radio::make('status_pembayaran')
-                        ->label('Pilih Tipe Pembayaran')
-                        ->options([
-                            'DP' => 'DP 30% + Upgrade Lunas Nanti',
-                            'LUNAS' => 'LUNAS (Bayar Penuh Sekarang)',
-                        ])
-                        ->dehydrated(true)
-                        ->required(fn(Get $get) => !$get('status_pembayaran') || $get('status_pembayaran') === 'BARU')
-                        ->reactive()
-                        ->live(),
-
-                    // BARU + DP: Upload Bukti DP (hidden, simpan ke dokumen_reservasi)
+                    // Upload Bukti DP - hanya tampil jika status NULL dan pilih DP
                     FileUpload::make('file_bukti_dp')
                         ->label('Upload Bukti Pembayaran DP (Wajib)')
                         ->disk('public')
@@ -496,10 +537,18 @@ class ReservasiResource extends Resource
                         ->preserveFilenames()
                         ->dehydrated(true)
                         ->nullable()
-                        ->required(fn(Get $get) => $get('status_pembayaran') === 'DP')
-                        ->hidden(), // Hidden tapi tetap bisa terima data
+                        ->required(fn(Get $get, $record) => 
+                            $record && !$record->status_pembayaran && $get('status_pembayaran') === 'DP'
+                        )
+                        ->visible(function($record, Get $get) {
+                            // Hanya tampil jika status NULL dan pilih DP
+                            if ($record && !$record->status_pembayaran && $get('status_pembayaran') === 'DP') {
+                                return true;
+                            }
+                            return false;
+                        }),
 
-                    // BARU + LUNAS: Upload Bukti Lunas (hidden, simpan ke dokumen_reservasi)
+                    // Upload Bukti Lunas - tampil jika (status NULL dan pilih LUNAS) atau (status DP dan pilih LUNAS)
                     FileUpload::make('file_bukti_lunas')
                         ->label('Upload Bukti Pembayaran Lunas (Wajib)')
                         ->disk('public')
@@ -510,12 +559,24 @@ class ReservasiResource extends Resource
                         ->dehydrated(true)
                         ->nullable()
                         ->required(fn(Get $get) => $get('status_pembayaran') === 'LUNAS')
-                        ->hidden(), // Hidden tapi tetap bisa terima data
+                        ->visible(function($record, Get $get) {
+                            // Tampil jika status NULL atau DP, dan pilih LUNAS
+                            if ($get('status_pembayaran') === 'LUNAS') {
+                                if ($record && !$record->status_pembayaran) {
+                                    return true; // Status NULL, pilih LUNAS
+                                }
+                                if ($record && $record->status_pembayaran === 'DP') {
+                                    return true; // Status DP, pilih LUNAS
+                                }
+                            }
+                            return false;
+                        }),
                 ]),
 
             // SECTION: Ringkasan Dokumen (View-only, display data dari database)
             Section::make('📂 Ringkasan Dokumen')
                 ->description('Semua file dokumen yang telah diupload')
+                ->visible(fn($record) => $record !== null) // Hanya tampil saat edit, tidak saat create
                 ->schema([
                     Group::make()
                         ->schema([

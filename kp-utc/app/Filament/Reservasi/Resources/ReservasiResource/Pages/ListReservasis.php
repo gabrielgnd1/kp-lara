@@ -12,13 +12,13 @@ class ListReservasis extends ListRecords
 
     public function getTitle(): string
     {
-        return 'Detail Reservasi';
+        return 'Daftar Reservasi';
     }
 
     public function getBreadcrumbs(): array
     {
         return [
-            $this->getResource()::getUrl() => 'Detail Reservasi',
+            $this->getResource()::getUrl() => 'Daftar Reservasi',
             '#' => 'Daftar',
         ];
     }

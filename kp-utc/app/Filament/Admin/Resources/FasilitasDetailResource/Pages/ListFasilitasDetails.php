@@ -21,13 +21,13 @@ class ListFasilitasDetails extends Page
 
     public function getTitle(): string
     {
-        return 'Detail Fasilitas';
+        return 'Daftar Fasilitas';
     }
 
     public function getBreadcrumbs(): array
     {
         return [
-            $this->getResource()::getUrl() => 'Detail Fasilitas',
+            $this->getResource()::getUrl() => 'Daftar Fasilitas',
             '#' => 'Daftar',
         ];
     }
