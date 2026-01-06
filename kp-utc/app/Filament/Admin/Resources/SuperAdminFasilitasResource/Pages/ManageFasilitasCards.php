@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\SuperAdminFasilitasResource\Pages;
 
 use App\Filament\Admin\Resources\SuperAdminFasilitasResource;
 use App\Models\Fasilitas;
+use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Collection;
@@ -23,6 +24,16 @@ class ManageFasilitasCards extends Page
         'vip_cottage' => true,
         'others' => true,
     ];
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\Action::make('create')
+                ->label('Tambah Fasilitas')
+                ->url(fn (): string => static::$resource::getUrl('create'))
+                ->icon('heroicon-o-plus'),
+        ];
+    }
 
     public function getTitle(): string
     {
@@ -91,12 +102,19 @@ class ManageFasilitasCards extends Page
     public function openEditModal(Fasilitas $facility): void
     {
         $this->editingFacility = $facility;
+        
+        // Get all variants of this facility
+        $variants = Fasilitas::where('nama', $facility->nama)->get();
+        
         $this->editFormData = [
             'nama' => $facility->nama,
             'kapasitas' => $facility->kapasitas,
             'keterangan' => $facility->keterangan,
-            'harga' => $facility->harga,
             'status' => $facility->status,
+            'harga_weekday_internal' => $variants->where('day', 'Weekday')->where('jenis_user', 'Internal')->where('menginap', 'Menginap')->first()->harga ?? 0,
+            'harga_weekday_eksternal' => $variants->where('day', 'Weekday')->where('jenis_user', 'Eksternal')->where('menginap', 'Menginap')->first()->harga ?? 0,
+            'harga_weekend_internal' => $variants->where('day', 'Weekend')->where('jenis_user', 'Internal')->where('menginap', 'Menginap')->first()->harga ?? 0,
+            'harga_weekend_eksternal' => $variants->where('day', 'Weekend')->where('jenis_user', 'Eksternal')->where('menginap', 'Menginap')->first()->harga ?? 0,
         ];
         $this->showEditModal = true;
     }
@@ -115,26 +133,50 @@ class ManageFasilitasCards extends Page
         }
 
         try {
-            // Update all variants of this facility with the same name
+            // Update common fields for all variants
             Fasilitas::where('nama', $this->editingFacility->nama)
                 ->update([
                     'kapasitas' => $this->editFormData['kapasitas'],
                     'keterangan' => $this->editFormData['keterangan'],
-                    'harga' => $this->editFormData['harga'],
                     'status' => $this->editFormData['status'],
                 ]);
+            
+            // Update price for each specific variant
+            Fasilitas::where('nama', $this->editingFacility->nama)
+                ->where('day', 'Weekday')
+                ->where('jenis_user', 'Internal')
+                ->where('menginap', 'Menginap')
+                ->update(['harga' => $this->editFormData['harga_weekday_internal']]);
+            
+            Fasilitas::where('nama', $this->editingFacility->nama)
+                ->where('day', 'Weekday')
+                ->where('jenis_user', 'Eksternal')
+                ->where('menginap', 'Menginap')
+                ->update(['harga' => $this->editFormData['harga_weekday_eksternal']]);
+            
+            Fasilitas::where('nama', $this->editingFacility->nama)
+                ->where('day', 'Weekend')
+                ->where('jenis_user', 'Internal')
+                ->where('menginap', 'Menginap')
+                ->update(['harga' => $this->editFormData['harga_weekend_internal']]);
+            
+            Fasilitas::where('nama', $this->editingFacility->nama)
+                ->where('day', 'Weekend')
+                ->where('jenis_user', 'Eksternal')
+                ->where('menginap', 'Menginap')
+                ->update(['harga' => $this->editFormData['harga_weekend_eksternal']]);
 
             $this->closeEditModal();
 
             Notification::make()
-                ->title('Success')
-                ->body('Facility updated successfully')
+                ->title('Berhasil')
+                ->body('Fasilitas berhasil diperbarui')
                 ->success()
                 ->send();
         } catch (\Exception $e) {
             Notification::make()
-                ->title('Error')
-                ->body('Failed to update facility: ' . $e->getMessage())
+                ->title('Gagal')
+                ->body('Gagal memperbarui fasilitas: ' . $e->getMessage())
                 ->danger()
                 ->send();
         }

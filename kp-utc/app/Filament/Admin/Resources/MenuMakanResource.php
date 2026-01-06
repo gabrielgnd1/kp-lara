@@ -14,8 +14,13 @@ class MenuMakanResource extends Resource
 {
     protected static ?string $model = MenuMakan::class;
     protected static ?string $navigationIcon = 'heroicon-o-cake';
-    protected static ?string $navigationGroup = 'Reservation Management';
-    protected static ?string $navigationLabel = 'Manage Menu Makan';
+    protected static ?string $navigationGroup = 'Manajemen Reservasi';
+    protected static ?string $navigationLabel = 'Kelola Menu Makan';
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar Menu Makan';
+    }
 
     public static function form(Form $form): Form
     {

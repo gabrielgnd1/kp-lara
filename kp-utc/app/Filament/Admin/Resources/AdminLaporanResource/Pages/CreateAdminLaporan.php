@@ -9,6 +9,8 @@ class CreateAdminLaporan extends CreateRecord
 {
     protected static string $resource = AdminLaporanResource::class;
 
+    protected static ?string $title = 'Tambah Laporan';
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

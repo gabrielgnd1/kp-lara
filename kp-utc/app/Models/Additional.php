@@ -10,19 +10,13 @@ class Additional extends Model
     //karena nama file Additional & nama table bukan additionals jadi hrs dideklarasi
     protected $table = 'additional';
 
+    public $timestamps = false;
+
     //ini isi smua atribut selain primary key
     protected $fillable = [
         'nama',
-        'internal_weekday_menginap',
-        'internal_weekend_menginap',
-        'internal_weekday_tidakmenginap',
-        'internal_weekend_tidakmenginap',
-        'eksternal_weekday_menginap',
-        'eksternal_weekend_menginap',
-        'eksternal_weekday_tidakmenginap',
-        'eksternal_weekend_tidakmenginap',
+        'harga',
         'deskripsi',
-        //status: aktif/tidak 
         'status'
     ];
 

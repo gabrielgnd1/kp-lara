@@ -137,3 +137,33 @@
         @apply bg-danger-100 text-danger-700;
     }
 }
+
+/* Filament Sidebar Menu Spacing */
+.fi-sidebar-nav-groups {
+    gap: 0 !important;
+}
+
+.fi-sidebar-nav-group {
+    gap: 0 !important;
+}
+
+.fi-sidebar-nav-item {
+    padding: 0.35rem 0.5rem !important;
+    margin: 0 !important;
+    font-size: 0.875rem !important;
+}
+
+.fi-sidebar-nav-group-items {
+    gap: 0 !important;
+}
+
+.fi-sidebar-nav-group-label {
+    padding: 0.35rem 0.5rem !important;
+    margin: 0 !important;
+    font-size: 0.875rem !important;
+}
+
+/* Hide Global Search */
+.fi-topbar-search-field {
+    display: none !important;
+}

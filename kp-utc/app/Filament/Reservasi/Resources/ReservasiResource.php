@@ -677,6 +677,8 @@ class ReservasiResource extends Resource
                     ->visible(fn ($record) => static::canEditRecord($record)),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn ($record) => static::canEditRecord($record)),
+                Tables\Actions\ViewAction::make()
+                    ->label('Lihat'),
                 Tables\Actions\Action::make('accept')
                     ->label('Terima')
                     ->icon('heroicon-o-check-circle')
@@ -771,6 +773,7 @@ class ReservasiResource extends Resource
     {
         return [
             'index' => Pages\ListReservasis::route('/'),
+            'view' => Pages\ViewReservasi::route('/{record}'),
             'edit' => Pages\EditReservasi::route('/{record}/edit'),
         ];
     }

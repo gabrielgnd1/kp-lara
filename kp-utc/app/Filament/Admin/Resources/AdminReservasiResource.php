@@ -31,8 +31,8 @@ class AdminReservasiResource extends Resource
 {
     protected static ?string $model = Reservasi::class;
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
-    protected static ?string $navigationGroup = 'Reservation Management';
-    protected static ?string $navigationLabel = 'Manage Reservasi';
+    protected static ?string $navigationGroup = 'Manajemen Reservasi';
+    protected static ?string $navigationLabel = 'Kelola Reservasi';
 
     public static function getModelLabel(): string
     {
@@ -41,7 +41,7 @@ class AdminReservasiResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'Reservasi';
+        return 'Daftar Reservasi';
     }
 
     protected static function hitungTotalHarga(

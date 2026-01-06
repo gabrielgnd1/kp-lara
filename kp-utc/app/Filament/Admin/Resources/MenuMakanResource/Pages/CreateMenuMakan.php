@@ -8,4 +8,6 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateMenuMakan extends CreateRecord
 {
     protected static string $resource = MenuMakanResource::class;
+
+    protected static ?string $title = 'Tambah Menu Makan';
 }

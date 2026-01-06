@@ -1,4 +1,4 @@
-<div class="flex h-screen w-screen items-start justify-center pt-32 overflow-hidden fixed inset-0 bg-gray-50">
+<div class="flex h-screen w-screen items-start justify-center pt-20 overflow-hidden fixed inset-0 bg-gray-50">
     <div class="w-screen max-w-md">
         <div class="space-y-4 px-5 py-6 bg-white shadow-xl rounded-xl sm:px-8 sm:py-8 border border-[#A8DE30]/20">
             <div class="text-center">

@@ -18,8 +18,13 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'User Management';
-    protected static ?string $navigationLabel = 'Manage Users';
+    protected static ?string $navigationGroup = 'Manajemen User';
+    protected static ?string $navigationLabel = 'Kelola User';
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Daftar User';
+    }
 
     public static function form(Form $form): Form
     {

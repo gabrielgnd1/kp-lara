@@ -15,8 +15,8 @@ class AdminLaporanResource extends Resource
 {
     protected static ?string $model = Laporan::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $navigationGroup = 'Report Management';
-    protected static ?string $navigationLabel = 'Manage Laporan';
+    protected static ?string $navigationGroup = 'Manajemen Laporan';
+    protected static ?string $navigationLabel = 'Kelola Laporan';
 
     public static function getModelLabel(): string
     {
@@ -25,25 +25,25 @@ class AdminLaporanResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'Laporan';
+        return 'Daftar Laporan';
     }
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Report Details')
+            Forms\Components\Section::make('Detail Laporan')
                 ->schema([
                     Forms\Components\TextInput::make('nama_laporan')
-                        ->label('Report Name')
+                        ->label('Nama Laporan')
                         ->required()
                         ->maxLength(100),
                     Forms\Components\Textarea::make('deskripsi')
-                        ->label('Description')
+                        ->label('Deskripsi')
                         ->required()
                         ->rows(3)
                         ->maxLength(1000),
                     Forms\Components\FileUpload::make('foto_laporan')
-                        ->label('Report Photo')
+                        ->label('Foto Laporan')
                         ->image()
                         ->disk('public')
                         ->directory('laporan')
@@ -54,40 +54,41 @@ class AdminLaporanResource extends Resource
                         ->label('Area')
                         ->required(),
                     Forms\Components\Select::make('prioritas')
+                        ->label('Prioritas')
                         ->required()
                         ->options([
-                            'Belum Ditentukan' => 'Not Determined',
-                            'Rendah' => 'Low',
-                            'Sedang' => 'Medium',
-                            'Tinggi' => 'High',
+                            'Belum Ditentukan' => 'Belum Ditentukan',
+                            'Rendah' => 'Rendah',
+                            'Sedang' => 'Sedang',
+                            'Tinggi' => 'Tinggi',
                         ]),
                     Forms\Components\DatePicker::make('tanggal_lapor')
-                        ->label('Report Date')
+                        ->label('Tanggal Lapor')
                         ->required(),
                     Forms\Components\DatePicker::make('tanggal_deadline')
-                        ->label('Deadline'),
+                        ->label('Tanggal Deadline'),
                     Forms\Components\Select::make('tipe_laporan')
-                        ->label('Report Type')
+                        ->label('Tipe Laporan')
                         ->required()
                         ->options([
-                            'Kebersihan' => 'Cleanliness',
-                            'Kerusakan' => 'Damage',
-                            'Perbaikan' => 'Repair',
-                            'Lainnya' => 'Other',
+                            'Kebersihan' => 'Kebersihan',
+                            'Kerusakan' => 'Kerusakan',
+                            'Perbaikan' => 'Perbaikan',
+                            'Lainnya' => 'Lainnya',
                         ]),
                     Forms\Components\Select::make('decision')
-                        ->label('Decision')
+                        ->label('Keputusan')
                         ->options([
-                            'Belum Diproses' => 'Not Processed',
-                            'Diproses' => 'Being Processed',
-                            'Selesai' => 'Completed',
+                            'Belum Diproses' => 'Belum Diproses',
+                            'Diproses' => 'Diproses',
+                            'Selesai' => 'Selesai',
                         ])
                         ->required(),
                     Forms\Components\Select::make('notifikasi')
-                        ->label('Notification')
+                        ->label('Notifikasi')
                         ->options([
-                            'Belum Dibaca' => 'Unread',
-                            'Dibaca' => 'Read',
+                            'Belum Dibaca' => 'Belum Dibaca',
+                            'Dibaca' => 'Dibaca',
                         ])
                         ->required(),
                 ])->columns(2),

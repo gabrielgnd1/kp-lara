@@ -124,7 +124,7 @@
                 <!-- Modal Header -->
                 <div style="background-color: #A8DE30; padding: 1.5rem; color: white;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Edit Facility</h3>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Ubah Fasilitas</h3>
                         <button
                             wire:click="closeEditModal"
                             style="background: none; border: none; color: white; cursor: pointer; padding: 0;"
@@ -144,7 +144,7 @@
                     <!-- Facility Name -->
                     <div>
                         <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
-                            Facility Name
+                            Nama Fasilitas
                         </label>
                         <input
                             type="text"
@@ -152,13 +152,13 @@
                             style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: #f3f4f6; color: #374151;"
                             disabled
                         />
-                        <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; margin-bottom: 0;">Facility names cannot be changed directly</p>
+                        <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; margin-bottom: 0;">Nama fasilitas tidak dapat diubah</p>
                     </div>
 
                     <!-- Capacity -->
                     <div>
                         <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
-                            Capacity
+                            Kapasitas
                         </label>
                         <input
                             type="number"
@@ -172,7 +172,7 @@
                     <!-- Description -->
                     <div>
                         <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
-                            Description
+                            Keterangan
                         </label>
                         <textarea
                             wire:model="editFormData.keterangan"
@@ -181,18 +181,83 @@
                         ></textarea>
                     </div>
 
-                    <!-- Price -->
-                    <div>
-                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
-                            Price (IDR)
-                        </label>
-                        <input
-                            type="number"
-                            wire:model="editFormData.harga"
-                            style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: white; color: #111827;"
-                            required
-                            min="0"
-                        />
+                    <!-- Price Section -->
+                    <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+                        <h4 style="font-size: 0.875rem; font-weight: 600; color: #374151; margin: 0 0 1rem 0;">Harga</h4>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <!-- Harga Weekday Internal -->
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
+                                    Weekday Internal
+                                </label>
+                                <div style="position: relative;">
+                                    <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 0.875rem;">Rp</span>
+                                    <input
+                                        type="number"
+                                        wire:model="editFormData.harga_weekday_internal"
+                                        value="{{ $editFormData['harga_weekday_internal'] ?? '' }}"
+                                        style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: white; color: #111827;"
+                                        required
+                                        min="0"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Harga Weekday Eksternal -->
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
+                                    Weekday Eksternal
+                                </label>
+                                <div style="position: relative;">
+                                    <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 0.875rem;">Rp</span>
+                                    <input
+                                        type="number"
+                                        wire:model="editFormData.harga_weekday_eksternal"
+                                        value="{{ $editFormData['harga_weekday_eksternal'] ?? '' }}"
+                                        style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: white; color: #111827;"
+                                        required
+                                        min="0"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Harga Weekend Internal -->
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
+                                    Weekend Internal
+                                </label>
+                                <div style="position: relative;">
+                                    <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 0.875rem;">Rp</span>
+                                    <input
+                                        type="number"
+                                        wire:model="editFormData.harga_weekend_internal"
+                                        value="{{ $editFormData['harga_weekend_internal'] ?? '' }}"
+                                        style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: white; color: #111827;"
+                                        required
+                                        min="0"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Harga Weekend Eksternal -->
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;">
+                                    Weekend Eksternal
+                                </label>
+                                <div style="position: relative;">
+                                    <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 0.875rem;">Rp</span>
+                                    <input
+                                        type="number"
+                                        wire:model="editFormData.harga_weekend_eksternal"
+                                        value="{{ $editFormData['harga_weekend_eksternal'] ?? '' }}"
+                                        style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: white; color: #111827;"
+                                        required
+                                        min="0"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Status -->
@@ -205,9 +270,9 @@
                             style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: white; color: #111827;"
                             required
                         >
-                            <option value="">Select Status</option>
-                            <option value="Available">Available</option>
-                            <option value="Not Available">Not Available</option>
+                            <option value="">Pilih Status</option>
+                            <option value="Available">Tersedia</option>
+                            <option value="Not Available">Tidak Tersedia</option>
                         </select>
                     </div>
 
@@ -220,7 +285,7 @@
                             onmouseover="this.style.backgroundColor='#f3f4f6'"
                             onmouseout="this.style.backgroundColor='white'"
                         >
-                            Cancel
+                            Batal
                         </button>
                         <button
                             type="submit"
@@ -228,7 +293,7 @@
                             onmouseover="this.style.backgroundColor='#96C81E'"
                             onmouseout="this.style.backgroundColor='#A8DE30'"
                         >
-                            Save Changes
+                            Simpan Perubahan
                         </button>
                     </div>
                 </form>
