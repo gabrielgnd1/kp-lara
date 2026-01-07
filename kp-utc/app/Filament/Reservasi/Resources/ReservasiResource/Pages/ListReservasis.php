@@ -28,6 +28,7 @@ class ListReservasis extends ListRecords
         return [
             Actions\CreateAction::make()
                 ->label('Tambah Reservasi')
+                ->modalHeading('Tambah Reservasi')
                 ->modalWidth('7xl')
                 ->mutateFormDataUsing(function (array $data): array {
                     $user = auth()->user();

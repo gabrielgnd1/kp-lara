@@ -613,7 +613,7 @@ class ReservasiResource extends Resource
                         ->columns(1),
                 ]),
 
-            DateTimePicker::make('tanggal_dibuat')->label('Tanggal Dibuat')->default(now())->required(),
+            DateTimePicker::make('tanggal_dibuat')->label('Tanggal Dibuat')->default(now())->required()->disabled(),
         ]);
     }
 

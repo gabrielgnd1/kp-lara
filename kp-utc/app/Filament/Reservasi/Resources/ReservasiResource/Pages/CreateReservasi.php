@@ -11,6 +11,11 @@ class CreateReservasi extends CreateRecord
 {
     protected static string $resource = ReservasiResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Tambah Reservasi';
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // status_pembayaran sudah langsung dari form, tidak perlu transform

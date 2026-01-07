@@ -64,7 +64,10 @@ class AdminLaporanResource extends Resource
                         ]),
                     Forms\Components\DatePicker::make('tanggal_lapor')
                         ->label('Tanggal Lapor')
-                        ->required(),
+                        ->required()
+                        ->default(now())
+                        ->disabled()
+                        ->dehydrated(true),
                     Forms\Components\DatePicker::make('tanggal_deadline')
                         ->label('Tanggal Deadline'),
                     Forms\Components\Select::make('tipe_laporan')

@@ -23,14 +23,19 @@ class Login extends Component
             'password' => 'required',
         ]);
 
-        if (Auth::attempt([
-            'email' => $this->email,    
-            'password' => $this->password,
-            'status' => 'Available',  // Only allow active users
-        ], $this->remember)) {
+        // First, check if user exists and credentials are correct
+        $user = \App\Models\User::where('email', $this->email)->first();
+        
+        if ($user && \Illuminate\Support\Facades\Hash::check($this->password, $user->password)) {
+            // Credentials are correct, now check if account is active
+            if ($user->status !== 'Available') {
+                $this->addError('email', 'Akun tidak aktif, silahkan hubungi admin.');
+                return;
+            }
+            
+            // Account is active, proceed with login
+            Auth::login($user, $this->remember);
             session()->regenerate();
-
-            $user = Auth::user();
             
             // Map role IDs to panel names
             $rolePanels = [
