@@ -61,7 +61,7 @@
                     <div class="text-center py-12">
                         <p class="text-gray-500">Belum ada laporan. Klik tombol "Tambah Laporan" untuk membuat laporan baru.</p>
                     </div>
-                @endifw
+                @endif
             </div>
         </div>
 
