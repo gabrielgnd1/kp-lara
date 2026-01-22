@@ -179,21 +179,27 @@ class AdminReservasiResource extends Resource
                 ])
                 ->columns(1),
 
+            TextInput::make('kode_reservasi')
+                ->label('Kode Reservasi')
+                ->disabled()
+                ->dehydrated(false)
+                ->visible(fn ($record) => $record !== null),
+
             Grid::make([
                 'default' => 1,
                 'md' => 2,
             ])->schema([
-                        TextInput::make('nama_pemesan')
-                            ->label('Nama Pemesan')
-                            ->required()
-                            ->maxLength(100),
+                TextInput::make('nama_pemesan')
+                    ->label('Nama Pemesan')
+                    ->required()
+                    ->maxLength(100),
 
-                        TextInput::make('no_telepon')
-                            ->label('No Telepon')
-                            ->tel()
-                            ->required()
-                            ->maxLength(20),
-                    ]),
+                TextInput::make('no_telepon')
+                    ->label('No Telepon')
+                    ->tel()
+                    ->required()
+                    ->maxLength(20),
+            ]),
 
             Forms\Components\TextInput::make('email')->label('Email')->email()->required()->maxLength(100),
             Forms\Components\TextInput::make('judul_kegiatan')->label('Judul Kegiatan')->required()->maxLength(100),
