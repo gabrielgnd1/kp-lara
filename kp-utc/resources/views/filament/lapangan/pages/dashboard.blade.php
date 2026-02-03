@@ -5,7 +5,8 @@
             <img src="{{ asset('assets/laporan/maintenan.png') }}" 
                  alt="Maintenance" 
                  class="max-w-full h-auto rounded-lg"
-                 style="max-height: 200px;">
+                 style="max-height: 200px; max-width: 600px;"
+                 loading="lazy">
         </div>
 
         <!-- Detail Laporan - Card Grid Layout (same as Detail Laporan page) -->
@@ -19,20 +20,36 @@
                 @endphp
 
                 @if($records->count() > 0)
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach ($records as $laporan)
-                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 border border-gray-200 dark:border-gray-700">
-                                <div class="flex flex-col items-center text-center gap-2">
-                                    <img src="{{ $laporan->foto_laporan ? asset('storage/' . $laporan->foto_laporan) : asset('assets/images/placeholder-laporan.png') }}"
-                                        style="height: 180px; width: 180px;"
-                                        class="object-cover rounded-md shadow mx-auto"
-                                        onerror="this.src='{{ asset('assets/images/placeholder-laporan.png') }}'"
+                            <div class="bg-white rounded-xl shadow p-4 border border-gray-200 flex flex-col">
+                                <div class="flex flex-col items-center text-center gap-2 flex-grow">
+                                    @php
+                                        // Get first photo from array, fallback to old string format
+                                        $fotoUrl = asset('assets/images/placeholder-laporan.png');
+                                        if (is_array($laporan->foto_laporan) && count($laporan->foto_laporan) > 0) {
+                                            $firstPhoto = $laporan->foto_laporan[0];
+                                            if (strpos($firstPhoto, 'laporan/') === false) {
+                                                $fotoUrl = asset('storage/laporan/' . $firstPhoto);
+                                            } else {
+                                                $fotoUrl = asset('storage/' . $firstPhoto);
+                                            }
+                                        } elseif (is_string($laporan->foto_laporan) && !empty($laporan->foto_laporan)) {
+                                            $fotoUrl = asset('storage/laporan/' . $laporan->foto_laporan);
+                                        }
+                                    @endphp
+                                    <img src="{{ $fotoUrl }}"
+                                        style="height: 160px; width: 160px; object-fit: cover;"
+                                        class="rounded-md shadow mx-auto"
+                                        loading="lazy"
+                                        alt="{{ $laporan->nama_laporan }}"
+                                        decoding="async"
                                     />
-                                    <div class="font-bold text-lg text-gray-900 dark:text-gray-100">{{ $laporan->nama_laporan }}</div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-400">{{ \Carbon\Carbon::parse($laporan->tanggal_lapor)->translatedFormat('d F Y') }}</div>
+                                    <div class="font-bold text-base text-gray-900 line-clamp-2">{{ $laporan->nama_laporan }}</div>
+                                    <div class="text-xs text-gray-600">{{ \Carbon\Carbon::parse($laporan->tanggal_lapor)->format('d M Y') }}</div>
                                     
-                                    <div class="flex gap-2 mt-2">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                    <div class="flex gap-1 mt-2 flex-wrap justify-center">
+                                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full
                                             @if($laporan->prioritas == 'Tinggi') bg-red-100 text-red-800
                                             @elseif($laporan->prioritas == 'Sedang') bg-yellow-100 text-yellow-800
                                             @elseif($laporan->prioritas == 'Rendah') bg-green-100 text-green-800
@@ -40,7 +57,7 @@
                                             @endif">
                                             {{ $laporan->prioritas }}
                                         </span>
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full
                                             @if($laporan->decision == 'Selesai') bg-green-100 text-green-800
                                             @elseif($laporan->decision == 'Diproses') bg-yellow-100 text-yellow-800
                                             @else bg-red-100 text-red-800
@@ -48,12 +65,12 @@
                                             {{ $laporan->decision }}
                                         </span>
                                     </div>
-
-                                    <a href="{{ route('discussion.show', $laporan->id) }}"
-                                       class="mt-2 inline-block px-4 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700">
-                                        Detail
-                                    </a>
                                 </div>
+
+                                <a href="{{ route('discussion.show', $laporan->id) }}"
+                                   class="mt-3 inline-block px-3 py-1 bg-orange-600 text-white text-xs rounded hover:bg-orange-700 transition-colors">
+                                    Detail
+                                </a>
                             </div>
                         @endforeach
                     </div>

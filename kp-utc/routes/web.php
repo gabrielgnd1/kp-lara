@@ -9,11 +9,13 @@ use App\Http\Controllers\ReservasiController;
 use App\Http\Controllers\ReservasiViewController;
 use App\Http\Controllers\DiskusiLaporanController;
 use App\Http\Controllers\DiscussionViewController;
+use App\Http\Controllers\Admin\LaporanPrintController;
 
 // Public routes
 Route::get('/', fn () => redirect('/login')); // redirect root ke login
 Route::get('/login', LoginComponent::class)->name('login');
 Route::get('/register', RegisterComponent::class)->name('register');
+Route::get('/user-manual', fn () => view('user-manual'))->name('user-manual');
 
 // Protected routes (require authentication)
 Route::middleware('auth')->group(function () {
@@ -25,6 +27,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan', LaporanList::class)->name('laporan.list');
     Route::get('/laporan/{laporanId}/discussion', [DiscussionViewController::class, 'show'])->name('discussion.show');
     Route::post('/discussion/store', [DiscussionViewController::class, 'store'])->name('diskusi.store');
+    
+    // Admin Laporan Print
+    Route::get('/admin/laporan/{id}/print', [LaporanPrintController::class, 'print'])->name('admin.laporan.print');
     
     // API routes for discussions
     Route::get('/api/diskusi/{laporanId}', [DiskusiLaporanController::class, 'getDiscussions'])->name('diskusi.get');

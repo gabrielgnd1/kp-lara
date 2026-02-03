@@ -13,6 +13,11 @@ class EditAdminLaporan extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('print')
+                ->label('Print')
+                ->icon('heroicon-o-printer')
+                ->url(fn () => route('admin.laporan.print', $this->record->id))
+                ->openUrlInNewTab(),
             Actions\DeleteAction::make(),
         ];
     }

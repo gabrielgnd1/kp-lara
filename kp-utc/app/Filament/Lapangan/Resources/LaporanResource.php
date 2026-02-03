@@ -35,15 +35,24 @@ class LaporanResource extends Resource
                 ->maxLength(1000),
 
             Forms\Components\FileUpload::make('foto_laporan')
-                ->label('Foto Laporan')
+                ->label('Foto Laporan (MAX 4 FOTO)')
                 ->image()
                 ->disk('public')
                 ->directory('laporan')
                 ->visibility('public')
+                ->multiple()
+                ->maxFiles(4)
+                ->reorderable(false)
+                ->appendFiles()
                 ->required(),
 
+            Forms\Components\TextInput::make('kode_laporan')
+                ->label('Kode Laporan')
+                ->disabled()
+                ->dehydrated(false),
+
             Forms\Components\DatePicker::make('tanggal_lapor')
-                ->label('Tanggal Lapor')
+                ->label('Tanggal Pelaporan')
                 ->default(now())
                 ->disabled()
                 ->required(),
@@ -55,6 +64,7 @@ class LaporanResource extends Resource
 
             Forms\Components\Hidden::make('user_id')
                 ->default(fn () => auth()->id())
+                ->dehydrated(true)
                 ->required(),
 
             Forms\Components\Hidden::make('prioritas')
@@ -85,7 +95,17 @@ class LaporanResource extends Resource
                     ->defaultImageUrl(asset('assets/images/placeholder-laporan.png'))
                     ->getStateUsing(function ($record) {
                         if ($record->foto_laporan) {
-                            return asset('storage/' . $record->foto_laporan);
+                            // Handle array of photos (get first one)
+                            if (is_array($record->foto_laporan) && count($record->foto_laporan) > 0) {
+                                $firstPhoto = $record->foto_laporan[0];
+                                if (strpos($firstPhoto, 'laporan/') === false) {
+                                    return asset('storage/laporan/' . $firstPhoto);
+                                } else {
+                                    return asset('storage/' . $firstPhoto);
+                                }
+                            } elseif (is_string($record->foto_laporan)) {
+                                return asset('storage/laporan/' . $record->foto_laporan);
+                            }
                         }
                         return null;
                     })

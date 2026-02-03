@@ -48,6 +48,12 @@ class AdminLaporanResource extends Resource
                         ->disk('public')
                         ->directory('laporan')
                         ->visibility('public')
+                        ->multiple()
+                        ->maxFiles(4)
+                        ->reorderable(false)
+                        ->appendFiles()
+                        ->previewable(true)
+                        ->downloadable(false)
                         ->required(),
                     Forms\Components\Select::make('area_id')
                         ->relationship('area', 'nama_area')
@@ -63,7 +69,7 @@ class AdminLaporanResource extends Resource
                             'Tinggi' => 'Tinggi',
                         ]),
                     Forms\Components\DatePicker::make('tanggal_lapor')
-                        ->label('Tanggal Lapor')
+                        ->label('Tanggal Pelaporan')
                         ->required()
                         ->default(now())
                         ->disabled()
@@ -108,7 +114,22 @@ class AdminLaporanResource extends Resource
                 Tables\Columns\ImageColumn::make('foto_laporan')
                     ->label('Foto')
                     ->disk('public')
-                    ->getStateUsing(fn ($record) => $record->foto_laporan ? asset('storage/' . $record->foto_laporan) : null),
+                    ->getStateUsing(function ($record) {
+                        if ($record->foto_laporan) {
+                            // Handle array of photos (get first one)
+                            if (is_array($record->foto_laporan) && count($record->foto_laporan) > 0) {
+                                $firstPhoto = $record->foto_laporan[0];
+                                if (strpos($firstPhoto, 'laporan/') === false) {
+                                    return asset('storage/laporan/' . $firstPhoto);
+                                } else {
+                                    return asset('storage/' . $firstPhoto);
+                                }
+                            } elseif (is_string($record->foto_laporan)) {
+                                return asset('storage/laporan/' . $record->foto_laporan);
+                            }
+                        }
+                        return null;
+                    }),
                 Tables\Columns\TextColumn::make('prioritas')
                     ->label('Prioritas')
                     ->badge()

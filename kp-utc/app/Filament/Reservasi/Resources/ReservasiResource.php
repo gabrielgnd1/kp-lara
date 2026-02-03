@@ -167,7 +167,7 @@ class ReservasiResource extends Resource
                 ->schema([
                     Radio::make('jenis_member')
                         ->label('Jenis Member')
-                        ->options(['Internal' => 'Internal', 'Eksternal' => 'Eksternal'])
+                        ->options(['Internal - Mahasiswa' => 'Internal - Mahasiswa', 'Internal - Karyawan' => 'Internal - Karyawan', 'Eksternal' => 'Eksternal'])
                         ->required()
                         ->reactive()
                         ->afterStateUpdated(function ($state, callable $set, Get $get) use ($recalc) {
@@ -961,10 +961,24 @@ class ReservasiResource extends Resource
 
     protected static function fasilitasGroupedByNamaForMember(string $jenisUser): array
     {
-        $rows = Fasilitas::query()
-            ->where('status', 'Available')
-            ->where('jenis_user', $jenisUser)
-            ->get();
+        // Handle both specific internal types and legacy 'Internal' values
+        if (strpos($jenisUser, 'Internal') === 0) {
+            // If it's 'Internal - Mahasiswa', 'Internal - Karyawan', or legacy 'Internal'
+            // Query for fasilitas with jenis_user like 'Internal%'
+            $rows = Fasilitas::query()
+                ->where('status', 'Available')
+                ->where(function ($query) use ($jenisUser) {
+                    $query->where('jenis_user', $jenisUser)
+                          ->orWhere('jenis_user', 'Internal'); // fallback to legacy 'Internal'
+                })
+                ->get();
+        } else {
+            // For 'Eksternal' and other types, exact match
+            $rows = Fasilitas::query()
+                ->where('status', 'Available')
+                ->where('jenis_user', $jenisUser)
+                ->get();
+        }
 
         $groups = [];
 
