@@ -35,6 +35,9 @@ class ViewAdminReservasi extends ViewRecord
                 'default' => 1,
                 'md' => 2,
             ])->schema([
+                TextInput::make('kode_reservasi')
+                    ->label('Kode Reservasi')
+                    ->disabled(),
                 TextInput::make('nama_pemesan')
                     ->label('Nama Pemesan')
                     ->disabled(),

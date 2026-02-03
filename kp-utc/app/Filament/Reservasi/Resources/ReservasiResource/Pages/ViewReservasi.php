@@ -30,6 +30,10 @@ class ViewReservasi extends ViewRecord
                         ->disabled(),
                 ])
                 ->columns(1),
+                
+            TextInput::make('kode_reservasi')
+                    ->label('Kode Reservasi')
+                    ->disabled(),
 
             Grid::make([
                 'default' => 1,

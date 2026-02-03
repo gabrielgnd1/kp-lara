@@ -14,7 +14,7 @@ class Reservasi extends Model
 
     // Only columns that actually exist in your DB
     protected $fillable = [
-        'jenis_member','nama_pemesan','no_telepon','email','judul_kegiatan',
+        'kode_reservasi','jenis_member','nama_pemesan','no_telepon','email','judul_kegiatan',
         'waktu_check_in','waktu_check_out',
         'jumlah_laki','jumlah_perempuan','informasi_tambahan',
         'diskon', 'harga_akhir',
@@ -39,6 +39,11 @@ class Reservasi extends Model
     {
         static::creating(function ($model) {
             $u = Auth::user();
+
+            // Generate kode_reservasi
+            if (empty($model->kode_reservasi)) {
+                $model->kode_reservasi = static::generateKodeReservasi($model->waktu_check_in);
+            }
 
             // safe defaults
             $model->status_pembayaran   = $model->status_pembayaran   ?? 'BARU';
@@ -72,6 +77,40 @@ class Reservasi extends Model
             $reservasi->additional()->detach();
             $reservasi->menuMakan()->detach();
         });
+    }
+
+    /**
+     * Generate kode reservasi with format: Rxxxx0126
+     * R = prefix
+     * xxxx = 4 digit counter (0001-9999) - reset every year
+     * 01 = month from check in date
+     * 26 = year from check in date
+     */
+    public static function generateKodeReservasi($waktuCheckIn)
+    {
+        // Parse check in date
+        $checkIn = Carbon::parse($waktuCheckIn);
+        $month = $checkIn->format('m'); // 01-12
+        $year = $checkIn->format('y');  // 26 for 2026
+        $fullYear = $checkIn->format('Y'); // 2026
+        
+        // Get the latest reservation for the same year
+        $latestReservasi = static::whereYear('waktu_check_in', $fullYear)
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        // Extract counter from kode_reservasi if exists
+        $nextNumber = 1;
+        if ($latestReservasi && $latestReservasi->kode_reservasi) {
+            // Extract the 4-digit counter from kode (position 1-4 after 'R')
+            $currentCounter = (int) substr($latestReservasi->kode_reservasi, 1, 4);
+            $nextNumber = $currentCounter + 1;
+        }
+        
+        // Ensure it's 4 digits, max 9999
+        $counter = str_pad(min($nextNumber, 9999), 4, '0', STR_PAD_LEFT);
+        
+        return "R{$counter}{$month}{$year}";
     }
 
     public function pic_ioc()

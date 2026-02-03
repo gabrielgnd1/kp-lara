@@ -356,6 +356,12 @@
 <!-- Personal Information -->
 <div class="form-section">
     <div class="section-title">DATA PEMESAN</div>
+    <div class="form-grid full">
+        <div class="form-group">
+            <label class="form-label">Kode Reservasi</label>
+            <div class="form-value">{{ $reservasi->kode_reservasi ?? '-' }}</div>
+        </div>
+    </div>
     <div class="form-grid">
         <div class="form-group">
             <label class="form-label">Nama Pemesan</label>
